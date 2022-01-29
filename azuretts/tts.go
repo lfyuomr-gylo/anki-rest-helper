@@ -1,0 +1,115 @@
+package azuretts
+
+import (
+	"anki-rest-enhancer/enhancerconf"
+	"anki-rest-enhancer/util/httputil"
+	"bytes"
+	"encoding/xml"
+	"github.com/joomcode/errorx"
+	"io"
+	"log"
+	"net"
+	"net/http"
+)
+
+type TextToSpeechResult struct {
+	Error     error
+	AudioData []byte
+}
+
+func NewAPI(conf enhancerconf.Azure) *API {
+	client := &http.Client{
+		Timeout: conf.RequestTimeout,
+	}
+	if conf.LogRequests {
+		client.Transport = httputil.NewLoggingRoundTripper(http.DefaultTransport)
+	}
+
+	return &API{client: client, conf: conf}
+}
+
+type API struct {
+	client *http.Client
+	conf   enhancerconf.Azure
+}
+
+func (api API) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechResult {
+	results := make(map[string]TextToSpeechResult, len(texts))
+	i := 0
+	for text := range texts {
+		i++ // make i equal to 1 on the first iteration
+		log.Printf("Speech synthesis [%d / %d]: call text-to-speech for text %q", i, len(texts), text)
+
+		audio, err := api.doTextToSpeech(text)
+		if err != nil {
+			results[text] = TextToSpeechResult{Error: err}
+			continue
+		}
+		results[text] = TextToSpeechResult{AudioData: audio}
+	}
+	return results
+}
+
+func (api API) doTextToSpeech(text string) ([]byte, error) {
+	req, err := api.makeTextToSpeechRequest(text)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.client.Do(req)
+	if err != nil {
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech API request timed out")
+		}
+		return nil, errorx.ExternalError.Wrap(err, "Azure API request failed")
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	audio, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errorx.ExternalError.Wrap(err, "failed to read Azure response body")
+	}
+	return audio, nil
+}
+
+func (api API) makeTextToSpeechRequest(text string) (*http.Request, error) {
+	type voice struct {
+		Name string `xml:"name,attr"`
+		Text string `xml:",chardata"`
+	}
+	type speak struct {
+		XMLName xml.Name `xml:"speak"`
+
+		Version string `xml:"version,attr"`
+		Lang    string `xml:"xml:lang,attr"`
+		XMLNS   string `xml:"xmlns,attr"`
+
+		Voice voice `xml:"voice"`
+	}
+
+	bodyStruct := speak{
+		Version: "1.0",
+		Lang:    api.conf.Language,
+		XMLNS:   "http://www.w3.org/2001/10/synthesis",
+		Voice: voice{
+			Name: api.conf.Voice,
+			Text: text,
+		},
+	}
+	body, err := xml.Marshal(bodyStruct)
+	if err != nil {
+		return nil, errorx.IllegalState.Wrap(err, "Failed to construct TTS request body")
+	}
+	req := &http.Request{
+		Method: http.MethodPost,
+		URL:    api.conf.EndpointURL,
+		Header: http.Header{
+			"Ocp-Apim-Subscription-Key": []string{api.conf.APIKey},
+			"Content-Type":              []string{"application/ssml+xml"},
+			"X-Microsoft-OutputFormat":  []string{"audio-16khz-128kbitrate-mono-mp3"},
+		},
+		Body:          io.NopCloser(bytes.NewReader(body)),
+		ContentLength: int64(len(body)),
+	}
+
+	return req, nil
+}

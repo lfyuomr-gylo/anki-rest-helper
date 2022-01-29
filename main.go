@@ -1,10 +1,9 @@
 package main
 
 import (
+	"anki-rest-enhancer/enhance"
 	"anki-rest-enhancer/enhancerconf"
-	"anki-rest-enhancer/tts"
 	_ "embed"
-	"encoding/base64"
 	"github.com/joomcode/errorx"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -34,16 +33,6 @@ func doMain() error {
 		return err
 	}
 
-	results := tts.TextToSpeech(conf.Azure, map[string]struct{}{"¡Hola, amigo! ¿Qué onda?": {}})
-	if err := results.Error; err != nil {
-		return err
-	}
-	for text, result := range results.TextToSpeech {
-		if err := result.Error; err != nil {
-			log.Printf("Audio generation for text %q failed with error %+v", text, err)
-			continue
-		}
-		log.Printf("Audio for text %q: %q", text, base64.StdEncoding.EncodeToString(result.AudioData))
-	}
-	return nil
+	enhancer := enhance.NewEnhancer(conf)
+	return enhancer.Enhance(conf)
 }
