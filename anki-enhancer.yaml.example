@@ -1,0 +1,26 @@
+azure:
+  apiKey: YOUR-API-KEY-HERE
+  endpointUrl: https://YOUR-AZURE-REGION-HERE.tts.speech.microsoft.com/cognitiveservices/v1
+  voice: es-MX-JorgeNeural
+anki:
+  logRequests: true
+  tts:
+    - textField: Word
+      audioField: WordVoiceover
+    - textField: Example1
+      audioField: Example1Translation
+      textPreprocessing:
+        - regexp: '\{\{(?P<word>[^}]+)\}\}'
+          replacement: '${word}'
+    - textField: Example2
+      audioField: Example2Translation
+      textPreprocessing:
+        - regexp: '\{\{(?P<word>[^}]+)\}\}'
+          replacement: '${word}'
+    - textField: ImperativeAffirmativeTu
+      audioField: ImperativeAffirmativeTuVoiceover
+    - textField: ImperativeAffirmativeTuExample
+      audioField: ImperativeAffirmativeTuExampleTranslation
+      textPreprocessing:
+        - regexp: '\{\{(?P<word>[^}]+)\}\}'
+          replacement: '${word}'
