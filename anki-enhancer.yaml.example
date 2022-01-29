@@ -8,19 +8,19 @@ anki:
     - textField: Word
       audioField: WordVoiceover
     - textField: Example1
-      audioField: Example1Translation
+      audioField: Example1Voiceover
       textPreprocessing:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
     - textField: Example2
-      audioField: Example2Translation
+      audioField: Example2Voiceover
       textPreprocessing:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
     - textField: ImperativeAffirmativeTu
       audioField: ImperativeAffirmativeTuVoiceover
     - textField: ImperativeAffirmativeTuExample
-      audioField: ImperativeAffirmativeTuExampleTranslation
+      audioField: ImperativeAffirmativeTuExampleVoiceover
       textPreprocessing:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
