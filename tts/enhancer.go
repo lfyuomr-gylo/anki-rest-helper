@@ -2,10 +2,14 @@ package tts
 
 import (
 	"anki-rest-enhancer/enhancerconf"
-	"github.com/Microsoft/cognitive-services-speech-sdk-go/speech"
+	"bytes"
+	"encoding/xml"
 	"github.com/joomcode/errorx"
+	"io"
 	"log"
-	"time"
+	"net"
+	"net/http"
+	"net/url"
 )
 
 type TextToSpeechResults struct {
@@ -19,57 +23,127 @@ type TextToSpeechResult struct {
 	AudioData []byte
 }
 
-func TextToSpeech(conf enhancerconf.Config, texts map[string]struct{}) TextToSpeechResults {
-	speechConf, err := speech.NewSpeechConfigFromSubscription(conf.AzureAPIKey, conf.AzureRegion)
-	if err != nil {
-		return TextToSpeechResults{Error: errorx.IllegalState.Wrap(err, "failed to construct Speech SDK config")}
-	}
-	defer speechConf.Close()
-	if voice := conf.AzureVoice; voice != nil {
-		if err := speechConf.SetSpeechSynthesisVoiceName(*voice); err != nil {
-			return TextToSpeechResults{Error: errorx.IllegalState.Wrap(err, "failed to set speech voice to %q", conf.AzureVoice)}
-		}
-	}
-
-	synthesizer, err := speech.NewSpeechSynthesizerFromConfig(speechConf, nil)
-	if err != nil {
-		return TextToSpeechResults{Error: errorx.IllegalState.Wrap(err, "failed to construct synthesizer")}
-	}
-	defer speechConf.Close()
+func TextToSpeech(conf enhancerconf.Azure, texts map[string]struct{}) TextToSpeechResults {
+	client := &http.Client{Timeout: conf.RequestTimeout}
 
 	results := TextToSpeechResults{TextToSpeech: make(map[string]TextToSpeechResult, len(texts))}
 	i := 0
 	for text := range texts {
-		i++ // increment counter at the beginning of the loop to make indices one-based instead of zero-based
-		writeLog := func(msg string, args ...interface{}) {
-			log.Printf("Speech synthesis [%d / %d]: "+msg, append([]interface{}{i, len(texts)}, args...)...)
-		}
+		i++ // make i equal to 1 on the first iteration
+		log.Printf("Speech synthesis [%d / %d]: call text-to-speech for text %s", i, len(texts), text)
 
-		writeLog("Start")
-		audioData, err := func() ([]byte, error) {
-			resultChan := synthesizer.SpeakTextAsync(text)
-			var result speech.SpeechSynthesisOutcome
-			select {
-			case <-time.After(conf.AzureSynthesisTimeout):
-				return nil, errorx.TimeoutElapsed.New("timeout elapsed for speech generation of text %s")
-			case result = <-resultChan:
-				// nop -- continue execution
-			}
-			if result.Error != nil {
-				return nil, errorx.ExternalError.Wrap(err, "Speech synthesis failed")
-			}
-			defer result.Close()
-
-			return result.Result.AudioData, nil
-		}()
-
+		audio, err := doTextToSpeech(client, apiCallArgs{
+			EndpointURL: conf.TTSEndpoint,
+			APIKey:      conf.APIKey,
+			Language:    conf.Language,
+			Voice:       conf.Voice,
+			Text:        text,
+		}, conf.LogRequests)
 		if err != nil {
-			writeLog("Failed with error %+v", err)
 			results.TextToSpeech[text] = TextToSpeechResult{Error: err}
 			continue
 		}
-		writeLog("Succeeded")
-		results.TextToSpeech[text] = TextToSpeechResult{AudioData: audioData}
+		results.TextToSpeech[text] = TextToSpeechResult{AudioData: audio}
 	}
 	return results
+}
+
+type apiCallArgs struct {
+	EndpointURL                   *url.URL
+	APIKey, Language, Voice, Text string
+}
+
+func doTextToSpeech(client *http.Client, args apiCallArgs, logRequest bool) ([]byte, error) {
+	req, err := makeTextToSpeechRequest(args)
+	if err != nil {
+		return nil, err
+	}
+	if logRequest {
+		logReq(req)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech API request timed out")
+		}
+		return nil, errorx.ExternalError.Wrap(err, "Azure API request failed")
+	}
+	if logRequest {
+		if err := logResp(resp); err != nil {
+			return nil, err
+		}
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	audio, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errorx.ExternalError.Wrap(err, "failed to read Azure response body")
+	}
+	return audio, nil
+}
+
+func makeTextToSpeechRequest(args apiCallArgs) (*http.Request, error) {
+	type voice struct {
+		Name string `xml:"name,attr"`
+		Text string `xml:",chardata"`
+	}
+	type speak struct {
+		XMLName xml.Name `xml:"speak"`
+
+		Version string `xml:"version,attr"`
+		Lang    string `xml:"xml:lang,attr"`
+		XMLNS   string `xml:"xmlns,attr"`
+
+		Voice voice `xml:"voice"`
+	}
+
+	bodyStruct := speak{
+		Version: "1.0",
+		Lang:    args.Language,
+		XMLNS:   "http://www.w3.org/2001/10/synthesis",
+		Voice: voice{
+			Name: args.Voice,
+			Text: args.Text,
+		},
+	}
+	body, err := xml.Marshal(bodyStruct)
+	if err != nil {
+		return nil, errorx.IllegalState.Wrap(err, "Failed to construct TTS request body")
+	}
+	req := &http.Request{
+		Method: http.MethodPost,
+		URL:    args.EndpointURL,
+		Header: http.Header{
+			"Ocp-Apim-Subscription-Key": []string{args.APIKey},
+			"Content-Type":              []string{"application/ssml+xml"},
+			"X-Microsoft-OutputFormat":  []string{"audio-16khz-128kbitrate-mono-mp3"},
+		},
+		Body:          io.NopCloser(bytes.NewReader(body)),
+		ContentLength: int64(len(body)),
+	}
+
+	return req, nil
+}
+
+func logReq(req *http.Request) {
+	log.Println("Calling Azure API...")
+	body, _ := io.ReadAll(req.Body)
+	_ = req.Body.Close()
+	req.Body = io.NopCloser(bytes.NewReader(body))
+	_ = req.Write(log.Writer())
+	req.Body = io.NopCloser(bytes.NewReader(body))
+}
+
+func logResp(resp *http.Response) error {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return errorx.ExternalError.Wrap(err, "failed to read Azure response body")
+	}
+	_ = resp.Body.Close()
+
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+	log.Println("Got response from Azure API:")
+	_ = resp.Write(log.Writer())
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+	return nil
 }

@@ -4,16 +4,80 @@ import (
 	"github.com/joomcode/errorx"
 	"log"
 	"net/url"
+	"strings"
 	"time"
 )
 
 type YAML struct {
-	AnkiConnectAddress string `yaml:"ankiConnectAddress"`
+	AnkiConnectAddress string    `yaml:"ankiConnectAddress"`
+	Azure              YAMLAzure `yaml:"azure"`
+}
 
-	AzureAPIKey           string  `yaml:"azureApiKey"`
-	AzureRegion           string  `yaml:"azureRegion"`
-	AzureVoice            *string `yaml:"azureVoice"`
-	AzureSynthesisTimeout string  `yaml:"ttsTimeout"`
+type YAMLAzure struct {
+	// required:
+	APIKey      string `yaml:"apiKey"`
+	EndpointURL string `yaml:"endpointUrl"`
+	Voice       string `yaml:"voice"`
+
+	// optional:
+	LogRequests    bool   `yaml:"logRequests"`
+	Language       string `yaml:"language"`
+	RequestTimeout string `yaml:"requestTimeout"`
+}
+
+func (c YAMLAzure) Parse() (Azure, error) {
+	var conf Azure
+
+	if key := c.APIKey; key == "" {
+		return Azure{}, errorx.IllegalState.New("API Key is not specified")
+	} else {
+		conf.APIKey = key
+	}
+
+	if endpoint := c.EndpointURL; endpoint == "" {
+		return Azure{}, errorx.IllegalState.New("Endpoint URL is not specified")
+	} else {
+		parsed, err := url.Parse(endpoint)
+		if err != nil {
+			return Azure{}, errorx.IllegalFormat.Wrap(err, "Malformed Azure endpoint: %q", endpoint)
+		}
+		conf.TTSEndpoint = parsed
+	}
+
+	if voice := c.Voice; voice == "" {
+		return Azure{}, errorx.IllegalState.New("Voice is not specified")
+	} else {
+		conf.Voice = voice
+	}
+
+	if lang := c.Language; lang == "" {
+		log.Println("Text-to-speech language is not explicitly specified in the config. Trying to infer from voice name...")
+		langLocaleVoice := strings.SplitN(c.Voice, "-", 3)
+		if len(langLocaleVoice) != 3 {
+			return Azure{}, errorx.IllegalFormat.New("Faile to infer language from voice name. Expected <lang-locale-voice> but got %q", c.Voice)
+		}
+		conf.Language = langLocaleVoice[0] + "-" + langLocaleVoice[1]
+	} else {
+		conf.Language = c.Language
+	}
+
+	{
+		const defaultRequestTimeout = "30s"
+		timeout := c.RequestTimeout
+		if timeout == "" {
+			log.Println("Azure request timeout is not specified, use default %q", defaultRequestTimeout)
+			timeout = defaultRequestTimeout
+		}
+		parsed, err := time.ParseDuration(timeout)
+		if err != nil {
+			return Azure{}, errorx.IllegalFormat.Wrap(err, "malformed request timeout")
+		}
+		conf.RequestTimeout = parsed
+	}
+
+	conf.LogRequests = c.LogRequests
+
+	return conf, nil
 }
 
 func (c YAML) Parse() (Config, error) {
@@ -33,43 +97,28 @@ func (c YAML) Parse() (Config, error) {
 		conf.AnkiConnectAddress = parsed
 	}
 
-	if key := c.AzureAPIKey; key == "" {
-		return Config{}, errorx.IllegalState.New("Azure API key must be specified")
-	} else {
-		conf.AzureAPIKey = key
-	}
-
-	if region := c.AzureRegion; region == "" {
-		return Config{}, errorx.IllegalState.New("Azure region must be specified")
-	} else {
-		conf.AzureRegion = region
-	}
-
-	conf.AzureVoice = c.AzureVoice
-
 	{
-		const defaultAzureSynthesisTimeout = "30s"
-		timeout := c.AzureSynthesisTimeout
-		if timeout == "" {
-			log.Printf("Azure Synthesis Timeout is not specified in the config. Use default: %s", defaultAzureSynthesisTimeout)
-			timeout = defaultAzureSynthesisTimeout
-		}
-		parsed, err := time.ParseDuration(timeout)
+		azureConf, err := c.Azure.Parse()
 		if err != nil {
-			return Config{}, errorx.IllegalFormat.Wrap(err, "Malformed speech synthesis timeout: %s", timeout)
+			return Config{}, errorx.Decorate(err, "invalid Azure config")
 		}
-		if parsed <= 0 {
-			return Config{}, errorx.IllegalState.New("Speech synthesis timeout must be positive")
-		}
-		conf.AzureSynthesisTimeout = parsed
+		conf.Azure = azureConf
 	}
+
+	return conf, nil
 }
 
 type Config struct {
 	AnkiConnectAddress *url.URL
+	Azure              Azure
+}
 
-	AzureAPIKey           string
-	AzureRegion           string
-	AzureVoice            *string
-	AzureSynthesisTimeout time.Duration
+type Azure struct {
+	APIKey         string
+	TTSEndpoint    *url.URL
+	Voice          string
+	RequestTimeout time.Duration
+	Language       string
+
+	LogRequests bool
 }
