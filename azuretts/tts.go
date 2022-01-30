@@ -105,7 +105,7 @@ func (api API) makeTextToSpeechRequest(text string) (*http.Request, error) {
 		Header: http.Header{
 			"Ocp-Apim-Subscription-Key": []string{api.conf.APIKey},
 			"Content-Type":              []string{"application/ssml+xml"},
-			"X-Microsoft-OutputFormat":  []string{"audio-16khz-128kbitrate-mono-mp3"},
+			"X-Microsoft-OutputFormat":  []string{"audio-24khz-160kbitrate-mono-mp3"},
 		},
 		Body:          io.NopCloser(bytes.NewReader(body)),
 		ContentLength: int64(len(body)),
