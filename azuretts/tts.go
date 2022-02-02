@@ -63,6 +63,15 @@ func (api API) doTextToSpeech(text string) ([]byte, error) {
 		return nil, errorx.ExternalError.Wrap(err, "Azure API request failed")
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		const maxBodySize = 1000
+		bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
+		body := string(bodyBytes)
+		if len(body) == maxBodySize {
+			body += "..."
+		}
+		return nil, errorx.ExternalError.New("Azure returned non-200 status code %d with the following body: %s", resp.StatusCode, body)
+	}
 
 	audio, err := io.ReadAll(resp.Body)
 	if err != nil {

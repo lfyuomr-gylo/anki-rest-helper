@@ -89,7 +89,7 @@ func (api API) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 				Fields:     []string{field},
 			})
 		default:
-			log.Printf("WARN: %+v", errorx.IllegalState.New("got empty field update for field %q", field))
+			log.Printf("WARN: %+v", errorx.IllegalState.New("got empty field %q update for note %d", field, noteID))
 		}
 	}
 
