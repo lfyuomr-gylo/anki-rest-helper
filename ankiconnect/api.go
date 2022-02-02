@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/joomcode/errorx"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -88,7 +89,7 @@ func (api API) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 				Fields:     []string{field},
 			})
 		default:
-			panic(errorx.IllegalState.New("unreachable code"))
+			log.Printf("WARN: %+v", errorx.IllegalState.New("got empty field update for field %q", field))
 		}
 	}
 
