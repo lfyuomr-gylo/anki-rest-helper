@@ -44,9 +44,10 @@ type YAMLAzure struct {
 	Voice       string `yaml:"voice"`
 
 	// optional:
-	LogRequests    bool   `yaml:"logRequests"`
-	Language       string `yaml:"language"`
-	RequestTimeout string `yaml:"requestTimeout"`
+	LogRequests             bool   `yaml:"logRequests"`
+	Language                string `yaml:"language"`
+	RequestTimeout          string `yaml:"requestTimeout"`
+	MinPauseBetweenRequests string `yaml:"minPauseBetweenRequests"`
 }
 
 func (c YAMLAzure) Parse() (Azure, error) {
@@ -100,6 +101,20 @@ func (c YAMLAzure) Parse() (Azure, error) {
 	}
 
 	conf.LogRequests = c.LogRequests
+
+	{
+		const defaultMinPauseBetweenRequests = "1s"
+		pause := c.MinPauseBetweenRequests
+		if c.MinPauseBetweenRequests == "" {
+			log.Printf("Minimum pause between requests to Azure API is not set. Use default %q", pause)
+			c.MinPauseBetweenRequests = defaultMinPauseBetweenRequests
+		}
+		parsed, err := time.ParseDuration(pause)
+		if err != nil {
+			return Azure{}, errorx.IllegalFormat.New("Failed to parse minimum pause between requests to Azure API: %q", parsed)
+		}
+		conf.MinPauseBetweenRequests = parsed
+	}
 
 	return conf, nil
 }
@@ -218,11 +233,12 @@ type Config struct {
 }
 
 type Azure struct {
-	APIKey         string
-	EndpointURL    *url.URL
-	Voice          string
-	RequestTimeout time.Duration
-	Language       string
+	APIKey                  string
+	EndpointURL             *url.URL
+	Voice                   string
+	RequestTimeout          time.Duration
+	Language                string
+	MinPauseBetweenRequests time.Duration
 
 	LogRequests bool
 }

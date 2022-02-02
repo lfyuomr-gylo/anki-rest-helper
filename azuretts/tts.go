@@ -21,8 +21,9 @@ func NewAPI(conf enhancerconf.Azure) *API {
 	client := &http.Client{
 		Timeout: conf.RequestTimeout,
 	}
+	client.Transport = httputil.NewThrottlingTransport(http.DefaultTransport, conf.MinPauseBetweenRequests)
 	if conf.LogRequests {
-		client.Transport = httputil.NewLoggingRoundTripper(http.DefaultTransport)
+		client.Transport = httputil.NewLoggingRoundTripper(client.Transport)
 	}
 
 	return &API{client: client, conf: conf}

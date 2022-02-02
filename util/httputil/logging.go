@@ -9,26 +9,18 @@ import (
 	"strings"
 )
 
-func NewLoggingRoundTripper(transport http.RoundTripper) *loggingRoundTripper {
-	return &loggingRoundTripper{transport: transport}
-}
-
-type loggingRoundTripper struct {
-	transport http.RoundTripper
-}
-
-var _ http.RoundTripper = (*loggingRoundTripper)(nil)
-
-func (rt loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	logReq(req)
-	resp, err := rt.transport.RoundTrip(req)
-	if err != nil {
-		return nil, err
-	}
-	if err := logResp(resp); err != nil {
-		return nil, err
-	}
-	return resp, nil
+func NewLoggingRoundTripper(transport http.RoundTripper) http.RoundTripper {
+	return RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		logReq(req)
+		resp, err := transport.RoundTrip(req)
+		if err != nil {
+			return nil, err
+		}
+		if err := logResp(resp); err != nil {
+			return nil, err
+		}
+		return resp, nil
+	})
 }
 
 func logReq(req *http.Request) {
