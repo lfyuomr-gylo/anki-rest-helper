@@ -27,7 +27,7 @@ func declareAction(name string, paramsProto interface{}, resultProto interface{}
 type requestPayload struct {
 	Action  action      `json:"action"`
 	Version int         `json:"version"`
-	Params  interface{} `json:"params"`
+	Params  interface{} `json:"params,omitempty"`
 }
 
 type responsePayload struct {

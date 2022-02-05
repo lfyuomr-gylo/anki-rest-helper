@@ -2,8 +2,11 @@ azure:
   apiKey: YOUR-API-KEY-HERE
   endpointUrl: https://YOUR-AZURE-REGION-HERE.tts.speech.microsoft.com/cognitiveservices/v1
   voice: es-MX-JorgeNeural
+  minPauseBetweenRequests: 1s
+#  voice: es-PE-AlexNeural
+#  logRequests: true
 anki:
-  logRequests: true
+  #  logRequests: true
   tts:
     - textField: Word
       audioField: WordVoiceover
@@ -24,3 +27,150 @@ anki:
       textPreprocessing:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
+  models:
+    - name: "SpanishVerbV2"
+      fields:
+        # For each field below, the following fields are created:
+        #   Field,
+        #   FieldVoiceover (unless skipVoiceover: true)
+        #   FieldExample, FieldExampleVoiceover, FieldExampleExplanation (unless skipExample: true)
+        - name: Word
+          skipExample: true
+        - name: Explanation
+          skipExample: true
+          skipVoiceover: true
+          skip
+
+        - name: IndicativePresentYo
+        - name: IndicativePresentTu
+        - name: IndicativePresentEl
+        - name: IndicativePresentNosotros
+        - name: IndicativePresentVosotros
+        - name: IndicativePresentEllos
+
+        - name: ImperativeAffirmativeTu
+        - name: ImperativeAffirmativeEl
+        - name: ImperativeAffirmativeNosotros
+        - name: ImperativeAffirmativeVosotros
+        - name: ImperativeAffirmativeEllos
+      templates:
+        # For each template a distinct card template is created for each field specified in forFields
+        # The following meta-variables will be constituted in name, front and back before passing them to Anki:
+        #   $$FIELD$$, $$FIELD_VOICEOVER$$, $$EXAMPLE$$, $$EXAMPLE_VOICEOVER$$, $$EXAMPLE_EXPLANATION$$
+        #
+        # Front layout is automatically wrapped with {{^$$FIELD$$}}{{/$$FIELD$$}}, so there is no need in
+        # this info manually adding this extra
+        - name: "Infinitive"
+          forFields:
+            - Word
+          front: |
+            <div class="verb">[verbo infinitivo]</div>
+            {{Translation}}
+            {{type::Word}}
+          back: >
+            <div class="verb">[verbo infinitivo]</div>
+            <div><b>{{Word}}</b>{{WordVoiceover}}</div> 
+            <div>{{Explanation}}</div>
+            <hr id=answer>
+            {{type::Word}}
+        - name: "Fill in $$FIELD$$"
+          forFields:
+            - IndicativePresentYo
+            - IndicativePresentTu
+            - IndicativePresentEl
+            - IndicativePresentNosotros
+            - IndicativePresentVosotros
+            - IndicativePresentEllos
+            - ImperativeAffirmativeTu
+            - ImperativeAffirmativeEl
+            - ImperativeAffirmativeNosotros
+            - ImperativeAffirmativeVosotros
+            - ImperativeAffirmativeEllos
+          front: |
+            {{#$$EXAMPLE$$}}
+            Completa la frase con verbo:<br>
+            <span class="mycloze">{{$$EXAMPLE$$}}</span>
+
+            Verbo significado:
+            {{Explanation}}
+
+            {{type::$$FIELD$$}}
+
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+            
+                elem.innerHTML = html;
+            });
+            </script>
+            {{/$$EXAMPLE$$}}
+          back: |
+            {{#$$EXAMPLE$$}}
+            <!-- TODO: add a variable with pronoun here -->
+            <div><b>{{$$FIELD$$}}</b>{{$$FIELD_VOICEOVER$$}}</div> 
+            
+            <span class="mycloze">{{$$EXAMPLE$$}}</span>{{$$EXAMPLE_VOICEOVER$$}}
+            <br>
+            {{$$EXAMPLE_EXPLANATION$$}}
+            
+            <hr id=answer>
+            {{type::$$FIELD$$}}
+
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+            {{/$$EXAMPLE$$}}
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+
+        .verb {
+          font-style: italic;
+          font-weight: bold;
+          font-size: 60%;
+        }
+
+        .cloze {
+         font-weight: bold;
+         color: blue;
+        }
