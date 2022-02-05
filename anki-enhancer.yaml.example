@@ -27,7 +27,7 @@ anki:
       textPreprocessing:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
-  models:
+  noteTypes:
     - name: "SpanishVerbV2"
       fields:
         # For each field below, the following fields are created:
@@ -39,7 +39,6 @@ anki:
         - name: Explanation
           skipExample: true
           skipVoiceover: true
-          skip
 
         - name: IndicativePresentYo
         - name: IndicativePresentTu
@@ -67,7 +66,7 @@ anki:
             <div class="verb">[verbo infinitivo]</div>
             {{Translation}}
             {{type::Word}}
-          back: >
+          back: |
             <div class="verb">[verbo infinitivo]</div>
             <div><b>{{Word}}</b>{{WordVoiceover}}</div> 
             <div>{{Explanation}}</div>

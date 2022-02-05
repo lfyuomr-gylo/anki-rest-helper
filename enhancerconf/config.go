@@ -120,10 +120,11 @@ func (c YAMLAzure) Parse() (Azure, error) {
 }
 
 type YAMLAnki struct {
-	ConnectURL     string        `yaml:"connectUrl"`
-	RequestTimeout string        `yaml:"requestTimeout"`
-	TTS            []YAMLAnkiTTS `yaml:"tts"`
-	LogRequests    bool          `yaml:"logRequests"`
+	ConnectURL     string             `yaml:"connectUrl"`
+	RequestTimeout string             `yaml:"requestTimeout"`
+	TTS            []YAMLAnkiTTS      `yaml:"tts"`
+	NoteTypes      []YAMLAnkiNoteType `yaml:"noteTypes"`
+	LogRequests    bool               `yaml:"logRequests"`
 }
 
 func (c YAMLAnki) Parse() (Anki, error) {
@@ -163,6 +164,15 @@ func (c YAMLAnki) Parse() (Anki, error) {
 			return Anki{}, errorx.Decorate(err, "invalid tts #%d", i)
 		}
 		conf.TTS = append(conf.TTS, parsed)
+	}
+
+	for i, noteType := range c.NoteTypes {
+		parsed, err := noteType.Parse()
+		if err != nil {
+			return Anki{}, errorx.Decorate(err, "invalid note type #%d", i)
+		}
+		conf.NoteTypes = append(conf.NoteTypes, parsed)
+		// TODO: make sure note type names are unique
 	}
 
 	conf.LogRequests = c.LogRequests
@@ -227,6 +237,104 @@ func (c YAMLTextProcessing) Parse() (TextProcessor, error) {
 	return regexpProcessor{regexp: compiled, replacement: c.Replacement}, nil
 }
 
+type YAMLAnkiNoteType struct {
+	Name      string                 `yaml:"name"`
+	CSS       string                 `yaml:"css"`
+	Fields    []YAMLAnkiNoteField    `yaml:"fields"`
+	Templates []YAMLAnkiCardTemplate `yaml:"templates"`
+}
+
+func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
+	if err := validateName(t.Name); err != nil {
+		return AnkiNoteType{}, err
+	}
+
+	// TODO: ensure fields have unique names
+	fields := make([]AnkiNoteField, len(t.Fields))
+	fieldsByName := make(map[string]AnkiNoteField, len(t.Fields))
+	for i, field := range t.Fields {
+		parsed, err := field.Parse()
+		if err != nil {
+			return AnkiNoteType{}, errorx.Decorate(err, "invalid field #%d", i)
+		}
+
+		if _, ok := fieldsByName[parsed.Name]; ok {
+			return AnkiNoteType{}, errorx.IllegalState.New("field %q is duplicated", parsed.Name)
+		}
+
+		fields[i] = parsed
+		fieldsByName[parsed.Name] = parsed
+	}
+
+	// TODO: ensure templates have unique names
+	templates := make([]AnkiCardTemplate, len(t.Templates))
+	for i, template := range t.Templates {
+		parsed, err := template.Parse(fieldsByName)
+		if err != nil {
+			return AnkiNoteType{}, errorx.Decorate(err, "invalid card template #%d", i)
+		}
+		templates[i] = parsed
+	}
+
+	return AnkiNoteType{
+		Name:      t.Name,
+		CSS:       t.CSS,
+		Fields:    fields,
+		Templates: templates,
+	}, nil
+}
+
+type YAMLAnkiNoteField struct {
+	Name          string `yaml:"name"`
+	SkipExample   bool   `yaml:"skipExample"`
+	SkipVoiceover bool   `yaml:"skipVoiceover"`
+}
+
+func (f YAMLAnkiNoteField) Parse() (AnkiNoteField, error) {
+	if err := validateName(f.Name); err != nil {
+		return AnkiNoteField{}, err
+	}
+	return AnkiNoteField(f), nil
+}
+
+type YAMLAnkiCardTemplate struct {
+	Name      string   `yaml:"name"`
+	ForFields []string `yaml:"forFields"`
+	Front     string   `yaml:"front"`
+	Back      string   `yaml:"back"`
+}
+
+func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (AnkiCardTemplate, error) {
+	if err := validateName(t.Name); err != nil {
+		return AnkiCardTemplate{}, err
+	}
+
+	fields := make([]AnkiNoteField, len(t.ForFields))
+	for _, fieldName := range t.ForFields {
+		field, ok := fieldsByName[fieldName]
+		if !ok {
+			return AnkiCardTemplate{}, errorx.IllegalState.New("there is no field %q", fieldName)
+		}
+		fields = append(fields, field)
+	}
+
+	return AnkiCardTemplate{
+		Name:      t.Name,
+		ForFields: fields,
+		Front:     t.Front,
+		Back:      t.Back,
+	}, nil
+}
+
+var namePattern = regexp.MustCompile(`^[A-Za-z_]\w*$`)
+
+func validateName(name string) error {
+	if ok := namePattern.MatchString(name); !ok {
+		return errorx.IllegalFormat.New("malformed name. Expected a valid variable name but got: %q", name)
+	}
+	return nil
+}
+
 type Config struct {
 	Anki  Anki
 	Azure Azure
@@ -247,13 +355,29 @@ type Anki struct {
 	ConnectURL     *url.URL
 	RequestTimeout time.Duration
 	TTS            []AnkiTTS
-
-	LogRequests bool
+	NoteTypes      []AnkiNoteType
+	LogRequests    bool
 }
 
 type AnkiTTS struct {
 	NoteFilter, TextField, AudioField string
 	TextPreprocessors                 []TextProcessor
+}
+
+type AnkiNoteType struct {
+	Name      string
+	CSS       string
+	Fields    []AnkiNoteField
+	Templates []AnkiCardTemplate
+}
+
+type AnkiNoteField YAMLAnkiNoteField
+
+type AnkiCardTemplate struct {
+	Name      string
+	ForFields []AnkiNoteField
+	Front     string
+	Back      string
 }
 
 type TextProcessor interface {
