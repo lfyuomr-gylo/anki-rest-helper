@@ -6,7 +6,7 @@ azure:
   minPauseBetweenRequests: 1s
 #  logRequests: true
 anki:
-  #  logRequests: true
+#  logRequests: true
   tts:
     - textField: Word
       audioField: WordVoiceover
@@ -71,7 +71,7 @@ anki:
             - Word
           front: |
             <div class="verb">[verbo infinitivo]</div>
-            {{Translation}}
+            {{Explanation}}
             {{type::Word}}
           back: |
             <div class="verb">[verbo infinitivo]</div>
@@ -79,7 +79,7 @@ anki:
             <div>{{Explanation}}</div>
             <hr id=answer>
             {{type::Word}}
-        - name: "Fill in $$FIELD$$"
+        - name: "FillIn$$FIELD$$"
           forFields:
             - IndicativePresentYo
             - IndicativePresentTu
@@ -118,7 +118,7 @@ anki:
                     }
                     html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
                 }
-            
+
                 elem.innerHTML = html;
             });
             </script>
@@ -126,12 +126,12 @@ anki:
           back: |
             {{#$$EXAMPLE$$}}
             <!-- TODO: add a variable with pronoun here -->
-            <div><b>{{$$FIELD$$}}</b>{{$$FIELD_VOICEOVER$$}}</div> 
-            
+            <div><b>{{$$FIELD$$}}</b>{{$$FIELD_VOICEOVER$$}}</div>
+
             <span class="mycloze">{{$$EXAMPLE$$}}</span>{{$$EXAMPLE_VOICEOVER$$}}
             <br>
             {{$$EXAMPLE_EXPLANATION$$}}
-            
+
             <hr id=answer>
             {{type::$$FIELD$$}}
 

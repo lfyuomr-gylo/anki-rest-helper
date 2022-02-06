@@ -265,7 +265,7 @@ type YAMLAnkiNoteType struct {
 }
 
 func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
-	if err := validateName(t.Name); err != nil {
+	if err := ValidateName(t.Name); err != nil {
 		return AnkiNoteType{}, err
 	}
 
@@ -311,7 +311,7 @@ type YAMLAnkiNoteField struct {
 }
 
 func (f YAMLAnkiNoteField) Parse() (AnkiNoteField, error) {
-	if err := validateName(f.Name); err != nil {
+	if err := ValidateName(f.Name); err != nil {
 		return AnkiNoteField{}, err
 	}
 	return AnkiNoteField(f), nil
@@ -325,11 +325,7 @@ type YAMLAnkiCardTemplate struct {
 }
 
 func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (AnkiCardTemplate, error) {
-	if err := validateName(t.Name); err != nil {
-		return AnkiCardTemplate{}, err
-	}
-
-	fields := make([]AnkiNoteField, len(t.ForFields))
+	fields := make([]AnkiNoteField, 0, len(t.ForFields))
 	for _, fieldName := range t.ForFields {
 		field, ok := fieldsByName[fieldName]
 		if !ok {
@@ -348,7 +344,7 @@ func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (Anki
 
 var namePattern = regexp.MustCompile(`^[A-Za-z_]\w*$`)
 
-func validateName(name string) error {
+func ValidateName(name string) error {
 	if ok := namePattern.MatchString(name); !ok {
 		return errorx.IllegalFormat.New("malformed name. Expected a valid variable name but got: %q", name)
 	}

@@ -115,35 +115,5 @@ type CreateModelCardTemplate struct {
 }
 
 type createModelResult struct {
-	Sortf     int           `json:"sortf"`
-	Did       int           `json:"did"`
-	LatexPre  string        `json:"latexPre"`
-	LatexPost string        `json:"latexPost"`
-	Mod       int           `json:"mod"`
-	Usn       int           `json:"usn"`
-	Vers      []interface{} `json:"vers"`
-	Type      int           `json:"type"`
-	Css       string        `json:"css"`
-	Name      string        `json:"name"`
-	Flds      []struct {
-		Name   string        `json:"name"`
-		Ord    int           `json:"ord"`
-		Sticky bool          `json:"sticky"`
-		Rtl    bool          `json:"rtl"`
-		Font   string        `json:"font"`
-		Size   int           `json:"size"`
-		Media  []interface{} `json:"media"`
-	} `json:"flds"`
-	Tmpls []struct {
-		Name  string      `json:"name"`
-		Ord   int         `json:"ord"`
-		Qfmt  string      `json:"qfmt"`
-		Afmt  string      `json:"afmt"`
-		Did   interface{} `json:"did"`
-		Bqfmt string      `json:"bqfmt"`
-		Bafmt string      `json:"bafmt"`
-	} `json:"tmpls"`
-	Tags []interface{}   `json:"tags"`
-	Id   string          `json:"id"`
-	Req  [][]interface{} `json:"req"`
+	// nop -- we don't need createModel action result at the time, so don't do any unmarshalling here
 }

@@ -159,6 +159,9 @@ func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
 			if err != nil {
 				return errorx.Decorate(err, "failed to build card template name for template %q and field %q", template.Name, field.Name)
 			}
+			if err := enhancerconf.ValidateName(templateName); err != nil {
+				return errorx.Decorate(err, "got invalid template name after variables substitution: %s", templateName)
+			}
 			front, err := substituteVariables(template.Front, substitutions)
 			if err != nil {
 				return errorx.Decorate(err, "failed to build card template front for %q and field %q", template.Name, field.Name)
