@@ -249,7 +249,7 @@ func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
 
 			templates = append(templates, ankiconnect.CreateModelCardTemplate{
 				Name:  templateName,
-				Front: front,
+				Front: fmt.Sprintf("{{#%s}}\n%s\n{{/%s}}", field.Name, front, field.Name),
 				Back:  back,
 			})
 		}

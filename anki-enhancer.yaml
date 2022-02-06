@@ -9,7 +9,7 @@ azure:
 anki:
   #  logRequests: true
   tts:
-    - forGeneratedNoteType: SpanishVerbV4
+    - forGeneratedNoteType: SpanishVerbV5
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
@@ -17,7 +17,7 @@ anki:
           replacement: '${word}'
     - textField: Word
       audioField: WordVoiceover
-      noteFilter: '(not note:SpanishVerbV4) Word:_* WordVoiceover:'
+      noteFilter: '(not note:SpanishVerbV5) Word:_* WordVoiceover:'
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
@@ -36,7 +36,7 @@ anki:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
   noteTypes:
-    - name: SpanishVerbV4
+    - name: SpanishVerbV5
       fields:
         # For each field below, the following fields are created:
         #   Field,
