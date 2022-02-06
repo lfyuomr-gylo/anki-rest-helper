@@ -87,10 +87,6 @@ anki:
             - IndicativePresentVosotros
             - IndicativePresentEllos
             - ImperativeAffirmativeTu
-            - ImperativeAffirmativeEl
-            - ImperativeAffirmativeNosotros
-            - ImperativeAffirmativeVosotros
-            - ImperativeAffirmativeEllos
           front: |
             {{#$$EXAMPLE$$}}
             Completa la frase con verbo:<br>
