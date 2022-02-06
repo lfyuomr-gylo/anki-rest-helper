@@ -97,6 +97,22 @@ func (api API) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 	return err
 }
 
+func (api API) ModelNames() ([]string, error) {
+	rawResult, err := api.doReq(modelNamesParams{})
+	if err != nil {
+		return nil, err
+	}
+	return rawResult.(modelNamesResult), nil
+}
+
+func (api API) CreateModel(params CreateModelParams) error {
+	_, err := api.doReq(params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (api API) doReq(params interface{}) (interface{}, error) {
 	actionName, ok := actionParamsMapping[reflect.TypeOf(params)]
 	if !ok {

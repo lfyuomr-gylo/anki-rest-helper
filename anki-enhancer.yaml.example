@@ -58,7 +58,7 @@ anki:
         #   $$FIELD$$, $$FIELD_VOICEOVER$$, $$EXAMPLE$$, $$EXAMPLE_VOICEOVER$$, $$EXAMPLE_EXPLANATION$$
         #
         # Front layout is automatically wrapped with {{^$$FIELD$$}}{{/$$FIELD$$}}, so there is no need in
-        # this info manually adding this extra
+        # adding this manually
         - name: "Infinitive"
           forFields:
             - Word

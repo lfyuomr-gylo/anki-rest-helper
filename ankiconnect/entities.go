@@ -87,3 +87,63 @@ type updateNoteFieldsAudio struct {
 type updateNoteFieldsResult struct {
 	// nop
 }
+
+//goland:noinspection GoUnusedGlobalVariable
+var actionModelNames = declareAction("modelNames", modelNamesParams{}, modelNamesResult{})
+
+type modelNamesParams struct {
+	// nop
+}
+
+type modelNamesResult []string
+
+//goland:noinspection GoUnusedGlobalVariable
+var actionCreateModel = declareAction("createModel", CreateModelParams{}, createModelResult{})
+
+type CreateModelParams struct {
+	ModelName     string                    `json:"modelName"`
+	InOrderFields []string                  `json:"inOrderFields"`
+	CSS           string                    `json:"css"`
+	IsCloze       bool                      `json:"isCloze"`
+	CardTemplates []CreateModelCardTemplate `json:"cardTemplates"`
+}
+
+type CreateModelCardTemplate struct {
+	Name  string `json:"Name"`
+	Front string `json:"Front"`
+	Back  string `json:"Back"`
+}
+
+type createModelResult struct {
+	Sortf     int           `json:"sortf"`
+	Did       int           `json:"did"`
+	LatexPre  string        `json:"latexPre"`
+	LatexPost string        `json:"latexPost"`
+	Mod       int           `json:"mod"`
+	Usn       int           `json:"usn"`
+	Vers      []interface{} `json:"vers"`
+	Type      int           `json:"type"`
+	Css       string        `json:"css"`
+	Name      string        `json:"name"`
+	Flds      []struct {
+		Name   string        `json:"name"`
+		Ord    int           `json:"ord"`
+		Sticky bool          `json:"sticky"`
+		Rtl    bool          `json:"rtl"`
+		Font   string        `json:"font"`
+		Size   int           `json:"size"`
+		Media  []interface{} `json:"media"`
+	} `json:"flds"`
+	Tmpls []struct {
+		Name  string      `json:"name"`
+		Ord   int         `json:"ord"`
+		Qfmt  string      `json:"qfmt"`
+		Afmt  string      `json:"afmt"`
+		Did   interface{} `json:"did"`
+		Bqfmt string      `json:"bqfmt"`
+		Bafmt string      `json:"bafmt"`
+	} `json:"tmpls"`
+	Tags []interface{}   `json:"tags"`
+	Id   string          `json:"id"`
+	Req  [][]interface{} `json:"req"`
+}
