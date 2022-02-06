@@ -201,9 +201,9 @@ func (c YAMLAnki) Parse() (Anki, error) {
 }
 
 type YAMLAnkiTTS struct {
-	// required:
-	TextField  string `yaml:"textField"`
-	AudioField string `yaml:"audioField"`
+	ForGeneratedNoteType string `yaml:"forGeneratedNoteType"`
+	TextField            string `yaml:"textField"`
+	AudioField           string `yaml:"audioField"`
 
 	// optional:
 	NoteFilter     string               `yaml:"noteFilter"`
@@ -213,24 +213,29 @@ type YAMLAnkiTTS struct {
 func (c YAMLAnkiTTS) Parse() (AnkiTTS, error) {
 	var conf AnkiTTS
 
-	if tf := c.TextField; tf == "" {
-		return AnkiTTS{}, errorx.IllegalState.New("Text field must be specified for TTS")
-	} else {
-		conf.TextField = tf
-	}
+	switch {
+	case c.ForGeneratedNoteType != "" && c.TextField == "" && c.AudioField == "":
+		if c.NoteFilter != "" {
+			return AnkiTTS{}, errorx.IllegalState.New("Note Filter doesn't make sense for generated note types")
+		}
 
-	if af := c.AudioField; af == "" {
-		return AnkiTTS{}, errorx.IllegalState.New("Audio field must be specified for TTS")
-	} else {
-		conf.AudioField = af
-	}
+		noteType := c.ForGeneratedNoteType
+		conf.GeneratedNoteTypeName = &noteType
+	case c.ForGeneratedNoteType == "" && c.TextField != "" && c.AudioField != "":
+		noteFilter := c.NoteFilter
+		if noteFilter == "" {
+			defaultFilter := fmt.Sprintf(`"%s:_*" "%s:"`, c.TextField, c.AudioField)
+			log.Printf("No filter specified in TTS for fields %s->%s. Infer filter: %s", c.TextField, c.AudioField, defaultFilter)
+			noteFilter = defaultFilter
+		}
 
-	if filter := c.NoteFilter; filter == "" {
-		defaultFilter := fmt.Sprintf(`"%s:_*" "%s:"`, c.TextField, c.AudioField)
-		log.Printf("No filter specified in TTS for fields %s->%s. Infer filter: %s", c.TextField, c.AudioField, defaultFilter)
-		conf.NoteFilter = defaultFilter
-	} else {
-		conf.NoteFilter = filter
+		conf.Fields = &AnkiTTSFields{
+			NoteFilter: noteFilter,
+			TextField:  c.TextField,
+			AudioField: c.AudioField,
+		}
+	default:
+		return AnkiTTS{}, errorx.IllegalState.New("Either generated note type or both text and audio fields must be specified for TTS")
 	}
 
 	for i, processing := range c.TextProcessing {
@@ -376,8 +381,15 @@ type Anki struct {
 }
 
 type AnkiTTS struct {
+	// oneof:
+	Fields                *AnkiTTSFields
+	GeneratedNoteTypeName *string
+
+	TextPreprocessors []TextProcessor
+}
+
+type AnkiTTSFields struct {
 	NoteFilter, TextField, AudioField string
-	TextPreprocessors                 []TextProcessor
 }
 
 type AnkiNoteType struct {

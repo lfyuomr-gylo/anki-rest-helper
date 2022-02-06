@@ -8,6 +8,12 @@ azure:
 anki:
 #  logRequests: true
   tts:
+    - forGeneratedNoteType: SpanishVerbV2
+      textPreprocessing:
+        - regexp: '\s+'
+          replacement: ' '
+        - regexp: '\{\{(?P<word>[^}]+)\}\}'
+          replacement: '${word}'
     - textField: Word
       audioField: WordVoiceover
       textPreprocessing:
@@ -27,15 +33,8 @@ anki:
           replacement: ' '
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
-    - textField: ImperativeAffirmativeTu
-      audioField: ImperativeAffirmativeTuVoiceover
-    - textField: ImperativeAffirmativeTuExample
-      audioField: ImperativeAffirmativeTuExampleVoiceover
-      textPreprocessing:
-        - regexp: '\{\{(?P<word>[^}]+)\}\}'
-          replacement: '${word}'
   noteTypes:
-    - name: "SpanishVerbV2"
+    - name: SpanishVerbV2
       fields:
         # For each field below, the following fields are created:
         #   Field,

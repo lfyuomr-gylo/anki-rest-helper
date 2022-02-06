@@ -5,6 +5,7 @@ import (
 	"anki-rest-enhancer/azuretts"
 	"anki-rest-enhancer/enhancerconf"
 	"anki-rest-enhancer/util/stringx"
+	"fmt"
 	"github.com/joomcode/errorx"
 	"log"
 )
@@ -22,10 +23,10 @@ type Enhancer struct {
 }
 
 func (e Enhancer) Enhance(conf enhancerconf.Config) error {
-	if err := e.generateTTS(conf); err != nil {
+	if err := e.ensureNoteTypes(conf.Anki.NoteTypes); err != nil {
 		return err
 	}
-	if err := e.ensureNoteTypes(conf.Anki.NoteTypes); err != nil {
+	if err := e.generateTTS(conf); err != nil {
 		return err
 	}
 
@@ -38,36 +39,24 @@ type ttsTask struct {
 	TargetFieldName string
 }
 
+type ttsTaskSource struct {
+	NoteFilter, TextField, AudioField string
+	TextPreprocessors                 []enhancerconf.TextProcessor
+}
+
 func (e Enhancer) generateTTS(conf enhancerconf.Config) error {
 	log.Println("Generate test-to-speech...")
+
+	// 0. Determine how to look for notes with missing Audio
+	taskSources, err := e.getTTSTaskSources(conf.Anki)
+	if err != nil {
+		return err
+	}
+
 	// 1. Find all the notes with missing audio in Anki
-	var ttsTasks []ttsTask
-	for i, tts := range conf.Anki.TTS {
-		noteIDs, err := e.ankiConnect.FindNotes(tts.NoteFilter)
-		if err != nil {
-			return errorx.Decorate(err, "failed to find notes matching filter for TTS #%d", i)
-		}
-
-		notes, err := e.ankiConnect.NotesInfo(noteIDs)
-		if err != nil {
-			return errorx.Decorate(err, "failed to obtain notes matching filter for TTS #%d", i)
-		}
-
-		for noteID, note := range notes {
-			text, ok := note.Fields[tts.TextField]
-			if !ok {
-				return errorx.IllegalState.New("There is no field %q in note %d", tts.TextField, noteID)
-			}
-			for _, preprocessor := range tts.TextPreprocessors {
-				text = preprocessor.Process(text)
-			}
-
-			ttsTasks = append(ttsTasks, ttsTask{
-				NoteID:          noteID,
-				Text:            text,
-				TargetFieldName: tts.AudioField,
-			})
-		}
+	ttsTasks, err := e.findTTSTasks(taskSources)
+	if err != nil {
+		return err
 	}
 
 	// 2. Generate audio for all the texts
@@ -99,6 +88,87 @@ func (e Enhancer) generateTTS(conf enhancerconf.Config) error {
 
 	log.Printf("Finished text-to-speech generation. Generations count (succeeded/failed): %d/%d", succeeded, failed)
 	return nil
+}
+
+func (e Enhancer) getTTSTaskSources(conf enhancerconf.Anki) ([]ttsTaskSource, error) {
+	noteTypeByName := map[string]enhancerconf.AnkiNoteType{}
+	for _, noteType := range conf.NoteTypes {
+		noteTypeByName[noteType.Name] = noteType
+	}
+
+	// 0. Determine note filters to use
+	var taskSources []ttsTaskSource
+	for i, tts := range conf.TTS {
+		switch {
+		case tts.Fields != nil:
+			taskSources = append(taskSources, ttsTaskSource{
+				NoteFilter:        tts.Fields.NoteFilter,
+				TextField:         tts.Fields.TextField,
+				AudioField:        tts.Fields.AudioField,
+				TextPreprocessors: tts.TextPreprocessors,
+			})
+		case tts.GeneratedNoteTypeName != nil:
+			typeName := *tts.GeneratedNoteTypeName
+			noteType, ok := noteTypeByName[typeName]
+			if !ok {
+				return nil, errorx.IllegalState.New("Broken generated note type reference %q in TTS #%d", typeName, i)
+			}
+			for _, field := range noteType.Fields {
+				names := e.fieldNames(field)
+				if names.Field != "" && names.FieldVoiceover != "" {
+					taskSources = append(taskSources, ttsTaskSource{
+						NoteFilter:        fmt.Sprintf(`"note:%s" "%s:_*" "%s:"`, typeName, names.Field, names.FieldVoiceover),
+						TextField:         names.Field,
+						AudioField:        names.FieldVoiceover,
+						TextPreprocessors: tts.TextPreprocessors,
+					})
+				}
+				if names.Example != "" && names.ExampleVoiceover != "" {
+					taskSources = append(taskSources, ttsTaskSource{
+						NoteFilter:        fmt.Sprintf(`"note:%s" "%s:_*" "%s:"`, typeName, names.Example, names.ExampleVoiceover),
+						TextField:         names.Example,
+						AudioField:        names.ExampleVoiceover,
+						TextPreprocessors: tts.TextPreprocessors,
+					})
+				}
+			}
+		default:
+			panic(errorx.Panic(errorx.IllegalState.New("unexpected tts: %+v", tts)))
+		}
+	}
+	return taskSources, nil
+}
+
+func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) ([]ttsTask, error) {
+	var ttsTasks []ttsTask
+	for i, tts := range taskSources {
+		noteIDs, err := e.ankiConnect.FindNotes(tts.NoteFilter)
+		if err != nil {
+			return nil, errorx.Decorate(err, "failed to find notes matching filter for TTS #%d", i)
+		}
+
+		notes, err := e.ankiConnect.NotesInfo(noteIDs)
+		if err != nil {
+			return nil, errorx.Decorate(err, "failed to obtain notes matching filter for TTS #%d", i)
+		}
+
+		for noteID, note := range notes {
+			text, ok := note.Fields[tts.TextField]
+			if !ok {
+				return nil, errorx.IllegalState.New("There is no field %q in note %d", tts.TextField, noteID)
+			}
+			for _, preprocessor := range tts.TextPreprocessors {
+				text = preprocessor.Process(text)
+			}
+
+			ttsTasks = append(ttsTasks, ttsTask{
+				NoteID:          noteID,
+				Text:            text,
+				TargetFieldName: tts.AudioField,
+			})
+		}
+	}
+	return ttsTasks, nil
 }
 
 func (e Enhancer) ensureNoteTypes(noteTypes []enhancerconf.AnkiNoteType) error {
