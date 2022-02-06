@@ -3,8 +3,11 @@ package enhancerconf
 import (
 	"fmt"
 	"github.com/joomcode/errorx"
+	"io"
 	"log"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -15,11 +18,11 @@ type YAML struct {
 	Azure YAMLAzure `yaml:"azure"`
 }
 
-func (c YAML) Parse() (Config, error) {
+func (c YAML) Parse(configDir string) (Config, error) {
 	conf := Config{}
 
 	{
-		azureConf, err := c.Azure.Parse()
+		azureConf, err := c.Azure.Parse(configDir)
 		if err != nil {
 			return Config{}, errorx.Decorate(err, "invalid Azure config")
 		}
@@ -40,6 +43,7 @@ func (c YAML) Parse() (Config, error) {
 type YAMLAzure struct {
 	// required:
 	APIKey      string `yaml:"apiKey"`
+	APIKeyFile  string `yaml:"apiKeyFile"`
 	EndpointURL string `yaml:"endpointUrl"`
 	Voice       string `yaml:"voice"`
 
@@ -50,13 +54,29 @@ type YAMLAzure struct {
 	MinPauseBetweenRequests string `yaml:"minPauseBetweenRequests"`
 }
 
-func (c YAMLAzure) Parse() (Azure, error) {
+func (c YAMLAzure) Parse(configDir string) (Azure, error) {
 	var conf Azure
-
-	if key := c.APIKey; key == "" {
-		return Azure{}, errorx.IllegalState.New("API Key is not specified")
-	} else {
+	if key := c.APIKey; key != "" {
 		conf.APIKey = key
+	} else if keyPath := c.APIKeyFile; keyPath != "" {
+		if !filepath.IsAbs(keyPath) {
+			keyPath = filepath.Join(configDir, keyPath)
+		}
+
+		log.Printf("Loading Azure API Key from %s", keyPath)
+		file, err := os.Open(keyPath)
+		if err != nil {
+			return Azure{}, errorx.ExternalError.Wrap(err, "failed to open file ")
+		}
+		defer func() { _ = file.Close() }()
+		rawKey, err := io.ReadAll(file)
+		if err != nil {
+			return Azure{}, errorx.ExternalError.Wrap(err, "failed to read Azure API key")
+		}
+		conf.APIKey = strings.TrimSpace(string(rawKey))
+	} else {
+		return Azure{}, errorx.IllegalState.New("API Key is not specified")
+
 	}
 
 	if endpoint := c.EndpointURL; endpoint == "" {

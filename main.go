@@ -15,6 +15,8 @@ import (
 var flagConfigPath = flag.String("config", "", "path to config file")
 
 func main() {
+	flag.Parse()
+
 	err := doMain()
 	if err != nil {
 		log.Printf("Failed with error %+v", err)
@@ -40,7 +42,7 @@ func doMain() error {
 	if err := yaml.UnmarshalStrict(confData, &rawConf); err != nil {
 		return errorx.IllegalFormat.Wrap(err, "Malformed enhancer config")
 	}
-	conf, err := rawConf.Parse()
+	conf, err := rawConf.Parse(filepath.Dir(configPath))
 	if err != nil {
 		return err
 	}
@@ -56,14 +58,17 @@ func findConfigFile() string {
 	}
 
 	var dirs []string
-	for dirType, getDir := range map[string]func() (string, error){
-		"current directory":     os.Getwd,
-		"user config directory": os.UserConfigDir,
-		"user home directory":   os.UserHomeDir,
+	for _, source := range []struct {
+		dirType string
+		getDir  func() (string, error)
+	}{
+		{"current directory", os.Getwd},
+		{"user config directory", os.UserConfigDir},
+		{"user home directory", os.UserHomeDir},
 	} {
-		dir, err := getDir()
+		dir, err := source.getDir()
 		if err != nil {
-			log.Printf("Failed to get %s: %+v", dirType, err)
+			log.Printf("Failed to get %s: %+v", source.dirType, err)
 		}
 		dirs = append(dirs, dir)
 	}
