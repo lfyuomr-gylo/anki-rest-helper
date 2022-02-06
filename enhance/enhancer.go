@@ -223,6 +223,12 @@ func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
 				"EXAMPLE_VOICEOVER":   names.ExampleVoiceover,
 				"EXAMPLE_EXPLANATION": names.ExampleExplanation,
 			}
+			for name, val := range field.Vars {
+				if _, ok := substitutions[name]; ok {
+					return errorx.IllegalState.New("custom variable %q collides with a default variable in template %q", name, template.Name)
+				}
+				substitutions[name] = val
+			}
 			stringx.RemoveEmptyValues(substitutions)
 
 			templateName, err := substituteVariables(template.Name, substitutions)

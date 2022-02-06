@@ -310,9 +310,10 @@ func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
 }
 
 type YAMLAnkiNoteField struct {
-	Name          string `yaml:"name"`
-	SkipExample   bool   `yaml:"skipExample"`
-	SkipVoiceover bool   `yaml:"skipVoiceover"`
+	Name          string            `yaml:"name"`
+	SkipExample   bool              `yaml:"skipExample"`
+	SkipVoiceover bool              `yaml:"skipVoiceover"`
+	Vars          map[string]string `yaml:"vars"`
 }
 
 func (f YAMLAnkiNoteField) Parse() (AnkiNoteField, error) {
