@@ -52,6 +52,7 @@ type YAMLAzure struct {
 	Language                string `yaml:"language"`
 	RequestTimeout          string `yaml:"requestTimeout"`
 	MinPauseBetweenRequests string `yaml:"minPauseBetweenRequests"`
+	RetryOnTooManyRequests  bool   `yaml:"retryOnTooManyRequests"`
 }
 
 func (c YAMLAzure) Parse(configDir string) (Azure, error) {
@@ -135,6 +136,8 @@ func (c YAMLAzure) Parse(configDir string) (Azure, error) {
 		}
 		conf.MinPauseBetweenRequests = parsed
 	}
+
+	conf.RetryOnTooManyRequests = c.RetryOnTooManyRequests
 
 	return conf, nil
 }
@@ -370,7 +373,8 @@ type Azure struct {
 	Language                string
 	MinPauseBetweenRequests time.Duration
 
-	LogRequests bool
+	LogRequests            bool
+	RetryOnTooManyRequests bool
 }
 
 type Anki struct {

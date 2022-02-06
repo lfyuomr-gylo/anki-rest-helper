@@ -41,7 +41,17 @@ func (api API) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechRe
 		i++ // make i equal to 1 on the first iteration
 		log.Printf("Speech synthesis [%d / %d]: call text-to-speech for text %q", i, len(texts), text)
 
-		audio, err := api.doTextToSpeech(text)
+		var audio []byte
+		var err error
+		for {
+			audio, err = api.doTextToSpeech(text)
+			if err != nil && api.conf.RetryOnTooManyRequests && errorx.IsOfType(err, TooManyRequests) {
+				// TODO: limit the number of retries.
+				log.Println("Got Too Many Requests from Azure. Retry the request...")
+				continue
+			}
+			break
+		}
 		if err != nil {
 			results[text] = TextToSpeechResult{Error: err}
 			continue
@@ -65,6 +75,9 @@ func (api API) doTextToSpeech(text string) ([]byte, error) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, TooManyRequests.NewWithNoMessage()
+		}
 		const maxBodySize = 1000
 		bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
 		body := string(bodyBytes)

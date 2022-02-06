@@ -4,6 +4,7 @@ azure:
   voice: es-MX-JorgeNeural
   #  voice: es-PE-AlexNeural
   minPauseBetweenRequests: 1s
+  retryOnTooManyRequests: true
 #  logRequests: true
 anki:
   #  logRequests: true
