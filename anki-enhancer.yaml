@@ -9,7 +9,7 @@ azure:
 anki:
   #  logRequests: true
   tts:
-    - forGeneratedNoteType: SpanishVerbV5
+    - forGeneratedNoteType: SpanishVerbV6
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
@@ -17,7 +17,7 @@ anki:
           replacement: '${word}'
     - textField: Word
       audioField: WordVoiceover
-      noteFilter: '-note:SpanishVerbV5 Word:_* WordVoiceover:'
+      noteFilter: '-note:SpanishVerbV6 Word:_* WordVoiceover:'
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
@@ -36,7 +36,7 @@ anki:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
   noteTypes:
-    - name: SpanishVerbV5
+    - name: SpanishVerbV6
       fields:
         # For each field below, the following fields are created:
         #   Field,
@@ -168,10 +168,10 @@ anki:
             <span class="mycloze">{{$$EXAMPLE$$}}</span>{{$$EXAMPLE_VOICEOVER$$}}
             <br>
             {{$$EXAMPLE_EXPLANATION$$}}
+            {{/$$EXAMPLE$$}}
 
             <hr id=answer>
             {{type::$$FIELD$$}}
-
 
             <script>
             var clozes = document.querySelectorAll(".mycloze");
@@ -197,7 +197,6 @@ anki:
                 elem.innerHTML = html;
             });
             </script>
-            {{/$$EXAMPLE$$}}
       css: |
         .card {
           font-family: arial;
