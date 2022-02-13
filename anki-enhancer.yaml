@@ -9,7 +9,7 @@ azure:
 anki:
   #  logRequests: true
   tts:
-    - forGeneratedNoteType: SpanishVerbV6
+    - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
@@ -17,7 +17,7 @@ anki:
           replacement: '${word}'
     - textField: Word
       audioField: WordVoiceover
-      noteFilter: '-note:SpanishVerbV6 Word:_* WordVoiceover:'
+      noteFilter: '-note:SpanishVerb Word:_* WordVoiceover:'
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
@@ -36,7 +36,7 @@ anki:
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
   noteTypes:
-    - name: SpanishVerbV6
+    - name: SpanishVerb
       fields:
         # For each field below, the following fields are created:
         #   Field,
@@ -72,6 +72,31 @@ anki:
           vars:
             PRONOUN: ellos/ellas/ustedes
             TENSE: Present Indicative
+
+        - name: IndicativePreteriteYo
+          vars:
+            PRONOUN: yo
+            TENSE: Preterite Indicative
+        - name: IndicativePreteriteTu
+          vars:
+            PRONOUN: tú
+            TENSE: Preterite Indicative
+        - name: IndicativePreteriteEl
+          vars:
+            PRONOUN: el/ella/usted
+            TENSE: Preterite Indicative
+        - name: IndicativePreteriteNosotros
+          vars:
+            PRONOUN: nosotros
+            TENSE: Preterite Indicative
+        - name: IndicativePreteriteVosotros
+          vars:
+            PRONOUN: vosotros
+            TENSE: Preterite Indicative
+        - name: IndicativePreteriteEllos
+          vars:
+            PRONOUN: ellos/ellas/ustedes
+            TENSE: Preterite Indicative
 
         - name: ImperativeAffirmativeTu
           vars:
@@ -122,6 +147,8 @@ anki:
             - IndicativePresentVosotros
             - IndicativePresentEllos
             - ImperativeAffirmativeTu
+            - IndicativePreteriteYo
+            - IndicativePreteriteEl
           front: |
             <div><span class="verb">[verb, $$TENSE$$]</span></div><br>
             <i>{{text:Explanation}}</i><br>
@@ -129,11 +156,11 @@ anki:
               <div>$$PRONOUN$$ <b><span class='cloze'>[&#8230;]</span></b></div>
             {{/$$EXAMPLE$$}}
             {{#$$EXAMPLE$$}}
-              <i>Completa la frase con verbo:</i><br>
-              <span class="mycloze">{{$$EXAMPLE$$}}</span>
-
               <br><br><i>Verbo significado:</i><br>
               {{Explanation}}
+
+              <i>Completa la frase con verbo:</i><br>
+              <span class="mycloze">{{$$EXAMPLE$$}}</span>
             {{/$$EXAMPLE$$}}
 
 
