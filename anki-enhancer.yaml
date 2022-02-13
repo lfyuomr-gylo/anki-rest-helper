@@ -17,7 +17,6 @@ anki:
           replacement: '${word}'
     - textField: Word
       audioField: WordVoiceover
-      noteFilter: '-note:SpanishVerb Word:_* WordVoiceover:'
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '

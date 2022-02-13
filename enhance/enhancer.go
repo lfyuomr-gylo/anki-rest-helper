@@ -61,14 +61,14 @@ func (e Enhancer) generateTTS(conf enhancerconf.Config) error {
 
 	// 2. Generate audio for all the texts
 	texts := make(map[string]struct{}, len(ttsTasks))
-	for _, task := range ttsTasks {
+	for task := range ttsTasks {
 		texts[task.Text] = struct{}{}
 	}
 	textToSpeech := e.azureTTS.TextToSpeech(texts)
 
 	// 3. Update Anki Cards
 	var succeeded, failed int
-	for _, task := range ttsTasks {
+	for task := range ttsTasks {
 		speech := textToSpeech[task.Text]
 		if err := speech.Error; err != nil {
 			log.Printf("Skip field %q in note %d due to text-to-speech error: %+v", task.TargetFieldName, task.NoteID, err)
@@ -139,8 +139,8 @@ func (e Enhancer) getTTSTaskSources(conf enhancerconf.Anki) ([]ttsTaskSource, er
 	return taskSources, nil
 }
 
-func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) ([]ttsTask, error) {
-	var ttsTasks []ttsTask
+func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) (map[ttsTask]struct{}, error) {
+	ttsTasks := make(map[ttsTask]struct{})
 	for i, tts := range taskSources {
 		noteIDs, err := e.ankiConnect.FindNotes(tts.NoteFilter)
 		if err != nil {
@@ -161,11 +161,12 @@ func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) ([]ttsTask, error) {
 				text = preprocessor.Process(text)
 			}
 
-			ttsTasks = append(ttsTasks, ttsTask{
+			task := ttsTask{
 				NoteID:          noteID,
 				Text:            text,
 				TargetFieldName: tts.AudioField,
-			})
+			}
+			ttsTasks[task] = struct{}{}
 		}
 	}
 	return ttsTasks, nil
