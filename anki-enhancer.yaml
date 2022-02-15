@@ -3,7 +3,7 @@ azure:
   endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
   voice: es-MX-JorgeNeural
   #  voice: es-PE-AlexNeural
-  minPauseBetweenRequests: 1s
+  minPauseBetweenRequests: 2100ms
   retryOnTooManyRequests: true
 #  logRequests: true
 anki:
