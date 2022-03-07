@@ -8,6 +8,7 @@ azure:
 #  logRequests: true
 anki:
   #  logRequests: true
+actions:
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
@@ -197,7 +198,7 @@ anki:
             <div><span class="verb">[verb, $$TENSE$$]</span></div>
             <i>{{text:Explanation}}</i><br>
             <div>$$PRONOUN$$ <b><span class='cloze'>{{text:$$FIELD$$}}</span></b>{{$$FIELD_VOICEOVER$$}}</div>
-            
+
             {{#$$EXAMPLE$$}}
             <span class="mycloze">{{$$EXAMPLE$$}}</span>{{$$EXAMPLE_VOICEOVER$$}}
             <br>

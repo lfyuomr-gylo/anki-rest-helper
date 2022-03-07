@@ -17,26 +17,26 @@ import (
 	"reflect"
 )
 
-func NewAPI(conf enhancerconf.Anki) *API {
+func NewAPI(conf enhancerconf.Anki) *api {
 	client := &http.Client{Timeout: conf.RequestTimeout}
 	if conf.LogRequests {
 		client.Transport = httputil.NewLoggingRoundTripper(http.DefaultTransport)
 	}
 
-	return &API{
+	return &api{
 		url:    conf.ConnectURL,
 		client: client,
 	}
 }
 
-type API struct {
+type api struct {
 	url    *url.URL
 	client *http.Client
 }
 
-type NoteID int64
+var _ API = (*api)(nil)
 
-func (api API) FindNotes(query string) ([]NoteID, error) {
+func (api api) FindNotes(query string) ([]NoteID, error) {
 	result, err := api.doReq(findNotesParams{Query: query})
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ type NoteInfo struct {
 	Fields map[string]string
 }
 
-func (api API) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
+func (api api) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
 	rawResult, err := api.doReq(notesInfoParams{NoteIDs: noteIDs})
 	if err != nil {
 		return nil, err
@@ -66,13 +66,7 @@ func (api API) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
 	return notes, nil
 }
 
-type FieldUpdate struct {
-	// one of
-	Value     string
-	AudioData []byte
-}
-
-func (api API) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) error {
+func (api api) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) error {
 	params := updateNoteFieldsParams{Note: updateNoteFieldsNote{
 		ID:     noteID,
 		Fields: make(map[string]string, len(fields)),
@@ -97,7 +91,7 @@ func (api API) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 	return err
 }
 
-func (api API) ModelNames() ([]string, error) {
+func (api api) ModelNames() ([]string, error) {
 	rawResult, err := api.doReq(modelNamesParams{})
 	if err != nil {
 		return nil, err
@@ -105,7 +99,7 @@ func (api API) ModelNames() ([]string, error) {
 	return rawResult.(modelNamesResult), nil
 }
 
-func (api API) CreateModel(params CreateModelParams) error {
+func (api api) CreateModel(params CreateModelParams) error {
 	_, err := api.doReq(params)
 	if err != nil {
 		return err
@@ -113,7 +107,7 @@ func (api API) CreateModel(params CreateModelParams) error {
 	return nil
 }
 
-func (api API) doReq(params interface{}) (interface{}, error) {
+func (api api) doReq(params interface{}) (interface{}, error) {
 	actionName, ok := actionParamsMapping[reflect.TypeOf(params)]
 	if !ok {
 		panic(errorx.IllegalState.New("got action params of unexpected type: %+v", params))
@@ -140,9 +134,9 @@ func (api API) doReq(params interface{}) (interface{}, error) {
 	resp, err := api.client.Do(req)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech API request timed out")
+			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech api request timed out")
 		}
-		return nil, errorx.ExternalError.Wrap(err, "Azure API request failed")
+		return nil, errorx.ExternalError.Wrap(err, "Azure api request failed")
 	}
 
 	body, err := io.ReadAll(resp.Body)

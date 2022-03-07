@@ -1,6 +1,8 @@
 package main
 
 import (
+	"anki-rest-enhancer/ankiconnect"
+	"anki-rest-enhancer/azuretts"
 	"anki-rest-enhancer/enhance"
 	"anki-rest-enhancer/enhancerconf"
 	"flag"
@@ -47,8 +49,11 @@ func doMain() error {
 		return err
 	}
 
-	enhancer := enhance.NewEnhancer(conf)
-	return enhancer.Enhance(conf)
+	azureTTS := azuretts.NewAPI(conf.Azure)
+	ankiConnect := ankiconnect.NewAPI(conf.Anki)
+
+	enhancer := enhance.NewEnhancer(ankiConnect, azureTTS)
+	return enhancer.Enhance(conf.Actions)
 }
 
 func findConfigFile() string {

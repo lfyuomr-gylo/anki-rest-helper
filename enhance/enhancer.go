@@ -10,20 +10,23 @@ import (
 	"log"
 )
 
-func NewEnhancer(conf enhancerconf.Config) *Enhancer {
+func NewEnhancer(
+	ankiConnect ankiconnect.API,
+	azureTTS azuretts.API,
+) *Enhancer {
 	return &Enhancer{
-		ankiConnect: ankiconnect.NewAPI(conf.Anki),
-		azureTTS:    azuretts.NewAPI(conf.Azure),
+		ankiConnect: ankiConnect,
+		azureTTS:    azureTTS,
 	}
 }
 
 type Enhancer struct {
-	ankiConnect *ankiconnect.API
-	azureTTS    *azuretts.API
+	ankiConnect ankiconnect.API
+	azureTTS    azuretts.API
 }
 
-func (e Enhancer) Enhance(conf enhancerconf.Config) error {
-	if err := e.ensureNoteTypes(conf.Anki.NoteTypes); err != nil {
+func (e Enhancer) Enhance(conf enhancerconf.Actions) error {
+	if err := e.ensureNoteTypes(conf.NoteTypes); err != nil {
 		return err
 	}
 	if err := e.generateTTS(conf); err != nil {
@@ -44,11 +47,11 @@ type ttsTaskSource struct {
 	TextPreprocessors                 []enhancerconf.TextProcessor
 }
 
-func (e Enhancer) generateTTS(conf enhancerconf.Config) error {
+func (e Enhancer) generateTTS(conf enhancerconf.Actions) error {
 	log.Println("Generate test-to-speech...")
 
 	// 0. Determine how to look for notes with missing Audio
-	taskSources, err := e.getTTSTaskSources(conf.Anki)
+	taskSources, err := e.getTTSTaskSources(conf)
 	if err != nil {
 		return err
 	}
@@ -76,7 +79,7 @@ func (e Enhancer) generateTTS(conf enhancerconf.Config) error {
 			continue
 		}
 		err := e.ankiConnect.UpdateNoteFields(task.NoteID, map[string]ankiconnect.FieldUpdate{
-			task.TargetFieldName: {AudioData: speech.AudioData},
+			task.TargetFieldName: {AudioData: speech.AudioMP3},
 		})
 		if err != nil {
 			log.Printf("Failed to update field %q of note %d due to AnkiConnect error: %+v", task.TargetFieldName, task.NoteID, err)
@@ -90,7 +93,7 @@ func (e Enhancer) generateTTS(conf enhancerconf.Config) error {
 	return nil
 }
 
-func (e Enhancer) getTTSTaskSources(conf enhancerconf.Anki) ([]ttsTaskSource, error) {
+func (e Enhancer) getTTSTaskSources(conf enhancerconf.Actions) ([]ttsTaskSource, error) {
 	noteTypeByName := map[string]enhancerconf.AnkiNoteType{}
 	for _, noteType := range conf.NoteTypes {
 		noteTypeByName[noteType.Name] = noteType

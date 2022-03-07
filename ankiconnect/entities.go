@@ -98,21 +98,11 @@ type modelNamesParams struct {
 type modelNamesResult []string
 
 //goland:noinspection GoUnusedGlobalVariable
-var actionCreateModel = declareAction("createModel", CreateModelParams{}, createModelResult{})
+var actionCreateModel = declareAction("createModel", createModelParams{}, createModelResult{})
 
-type CreateModelParams struct {
-	ModelName     string                    `json:"modelName"`
-	InOrderFields []string                  `json:"inOrderFields"`
-	CSS           string                    `json:"css"`
-	IsCloze       bool                      `json:"isCloze"`
-	CardTemplates []CreateModelCardTemplate `json:"cardTemplates"`
-}
-
-type CreateModelCardTemplate struct {
-	Name  string `json:"Name"`
-	Front string `json:"Front"`
-	Back  string `json:"Back"`
-}
+// Right now AnkiConnect model creation request structure perfectly fits the API needs,
+// so it is reused both as API parameter and as a DTO.
+type createModelParams = CreateModelParams
 
 type createModelResult struct {
 	// nop -- we don't need createModel action result at the time, so don't do any unmarshalling here

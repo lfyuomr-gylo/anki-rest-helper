@@ -12,12 +12,7 @@ import (
 	"net/http"
 )
 
-type TextToSpeechResult struct {
-	Error     error
-	AudioData []byte
-}
-
-func NewAPI(conf enhancerconf.Azure) *API {
+func NewAPI(conf enhancerconf.Azure) *api {
 	client := &http.Client{
 		Timeout: conf.RequestTimeout,
 	}
@@ -26,15 +21,15 @@ func NewAPI(conf enhancerconf.Azure) *API {
 		client.Transport = httputil.NewLoggingRoundTripper(client.Transport)
 	}
 
-	return &API{client: client, conf: conf}
+	return &api{client: client, conf: conf}
 }
 
-type API struct {
+type api struct {
 	client *http.Client
 	conf   enhancerconf.Azure
 }
 
-func (api API) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechResult {
+func (api api) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechResult {
 	results := make(map[string]TextToSpeechResult, len(texts))
 	i := 0
 	for text := range texts {
@@ -56,12 +51,12 @@ func (api API) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechRe
 			results[text] = TextToSpeechResult{Error: err}
 			continue
 		}
-		results[text] = TextToSpeechResult{AudioData: audio}
+		results[text] = TextToSpeechResult{AudioMP3: audio}
 	}
 	return results
 }
 
-func (api API) doTextToSpeech(text string) ([]byte, error) {
+func (api api) doTextToSpeech(text string) ([]byte, error) {
 	req, err := api.makeTextToSpeechRequest(text)
 	if err != nil {
 		return nil, err
@@ -94,7 +89,7 @@ func (api API) doTextToSpeech(text string) ([]byte, error) {
 	return audio, nil
 }
 
-func (api API) makeTextToSpeechRequest(text string) (*http.Request, error) {
+func (api api) makeTextToSpeechRequest(text string) (*http.Request, error) {
 	type voice struct {
 		Name string `xml:"name,attr"`
 		Text string `xml:",chardata"`
