@@ -34,6 +34,14 @@ anki:
           replacement: ' '
         - regexp: '\{\{(?P<word>[^}]+)\}\}'
           replacement: '${word}'
+    - textField: Male
+      audioField: MaleVoiceover
+    - textField: Female
+      audioField: FemaleVoiceover
+    - textField: PluralMale
+      audioField: PluralMaleVoiceover
+    - textField: PluralFemale
+      audioField: PluralFemaleVoiceover
   noteTypes:
     - name: SpanishVerb
       fields:
