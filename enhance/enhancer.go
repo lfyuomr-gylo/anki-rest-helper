@@ -61,6 +61,10 @@ func (e Enhancer) generateTTS(conf enhancerconf.Actions) error {
 	if err != nil {
 		return err
 	}
+	if len(ttsTasks) == 0 {
+		log.Println("No text to generate speech found. Skip text-to-speech generation")
+		return nil
+	}
 
 	// 2. Generate audio for all the texts
 	texts := make(map[string]struct{}, len(ttsTasks))
