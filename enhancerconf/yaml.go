@@ -120,7 +120,7 @@ func (c YAMLAzure) Parse(configDir string) (Azure, error) {
 		const defaultRequestTimeout = "30s"
 		timeout := c.RequestTimeout
 		if timeout == "" {
-			log.Println("Azure request timeout is not specified, use default %q", defaultRequestTimeout)
+			log.Printf("Azure request timeout is not specified, use default %q", defaultRequestTimeout)
 			timeout = defaultRequestTimeout
 		}
 		parsed, err := time.ParseDuration(timeout)
