@@ -40,3 +40,8 @@ docker run --rm -v `pwd`:/projects/anki-helper -w /projects/anki-helper golang:1
 chown -R `whoami` build/
 chmod -R +x build/
 ```
+
+# For HousingAnywhere
+
+Please, check out [HOUSING_ANYWHERE.md](HOUING_ANYWHERE.md) to find my submission comments.
+
