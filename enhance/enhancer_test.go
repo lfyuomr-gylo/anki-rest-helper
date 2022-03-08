@@ -162,12 +162,10 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoExampleOrVoiceover()
 func (s *EnhancerSuite) TestTTSGeneration_Simple() {
 	// given:
 	const (
-		query                         = "foo:_* fooVoiceover:"
-		noteID     ankiconnect.NoteID = 42
-		textField                     = "foo"
-		audioField                    = "bar"
-		text                          = "¡Hola, buenos días!"
-		audio                         = "abacabadabacaba"
+		query                                    = "foo:_* fooVoiceover:"
+		noteID                ankiconnect.NoteID = 42
+		textField, audioField                    = "foo", "bar"
+		text, audio                              = "¡Hola, buenos días!", "abacabadabacaba"
 	)
 	actions := enhancerconf.Actions{
 		TTS: []enhancerconf.AnkiTTS{{
@@ -213,4 +211,62 @@ func (s *EnhancerSuite) TestTTSGeneration_Simple() {
 	// then:
 	s.Require().NoError(err)
 	s.Require().Equal(expectedNoteUpdate, updatedFields)
+}
+
+func (s *EnhancerSuite) TestTTSGeneration_SingleErrorIsIgnored() {
+	// given: note1
+	const (
+		textField, audioField                    = "text", "audio"
+		noteID1, noteID2      ankiconnect.NoteID = 42, 16
+		query                                    = "text:_* audio:"
+		text1                                    = "¿Qué pasa?"
+		text2, audio2                            = "Ahora yo escribo el test", "abacabadabacaba"
+	)
+	actions := enhancerconf.Actions{
+		TTS: []enhancerconf.AnkiTTS{{
+			Fields: &enhancerconf.AnkiTTSFields{
+				NoteFilter: query,
+				TextField:  textField,
+				AudioField: audioField,
+			},
+		}},
+		NoteTypes: nil,
+	}
+	// Speech generation fails for the first note, so we expect the enhancer to skip that note and only
+	// update the second note for which the generation succeeded.
+	type noteUpdatesMap = map[ankiconnect.NoteID]map[string]ankiconnect.FieldUpdate
+	expectedUpdates := noteUpdatesMap{noteID2: {audioField: {AudioData: []byte(audio2)}}}
+
+	// setup:
+	s.AnkiMock.FindNotesFunc = func(aQuery string) ([]ankiconnect.NoteID, error) {
+		s.Require().Equal(query, aQuery)
+		return []ankiconnect.NoteID{noteID1, noteID2}, nil
+	}
+	s.AnkiMock.NotesInfoFunc = func(noteIDs []ankiconnect.NoteID) (map[ankiconnect.NoteID]ankiconnect.NoteInfo, error) {
+		s.Require().ElementsMatch([]ankiconnect.NoteID{noteID1, noteID2}, noteIDs)
+		return map[ankiconnect.NoteID]ankiconnect.NoteInfo{
+			noteID1: {Fields: map[string]string{textField: text1, audioField: ""}},
+			noteID2: {Fields: map[string]string{textField: text2, audioField: ""}},
+		}, nil
+	}
+	s.TTSMock.TextToSpeechFunc = func(texts map[string]struct{}) map[string]azuretts.TextToSpeechResult {
+		s.Require().Equal(map[string]struct{}{text1: {}, text2: {}}, texts)
+		return map[string]azuretts.TextToSpeechResult{
+			text1: {Error: azuretts.TooManyRequests.NewWithNoMessage()},
+			text2: {AudioMP3: []byte(audio2)},
+		}
+	}
+	noteUpdates := make(noteUpdatesMap)
+	s.AnkiMock.UpdateNoteFieldsFunc = func(noteID ankiconnect.NoteID, fields map[string]ankiconnect.FieldUpdate) error {
+		s.Require().NotContains(noteUpdates, noteID, "note has already been updated")
+		noteUpdates[noteID] = fields
+		return nil
+	}
+
+	// when:
+	err := s.Enhancer.Enhance(actions)
+
+	// then:
+	s.Require().NoError(err)
+	s.Require().Equal(expectedUpdates, noteUpdates)
 }
