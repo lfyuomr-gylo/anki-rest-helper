@@ -128,7 +128,7 @@ actions:
             TENSE: Imperative Affirmative
       templates:
         # For each template a distinct card template is created for each field specified in forFields
-        # The following meta-variables will be constituted in name, front and back before passing them to Anki:
+        # The following meta-variables will be substituted in name, front and back before passing them to Anki:
         #   $$FIELD$$, $$FIELD_VOICEOVER$$, $$EXAMPLE$$, $$EXAMPLE_VOICEOVER$$, $$EXAMPLE_EXPLANATION$$
         #
         # Front layout is automatically wrapped with {{^$$FIELD$$}}{{/$$FIELD$$}}, so there is no need in
