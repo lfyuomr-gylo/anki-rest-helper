@@ -1,3 +1,5 @@
 .idea/
 
 azure-key.txt
+
+build/
