@@ -62,6 +62,7 @@ type YAMLAzure struct {
 	RequestTimeout          string `yaml:"requestTimeout"`
 	MinPauseBetweenRequests string `yaml:"minPauseBetweenRequests"`
 	RetryOnTooManyRequests  bool   `yaml:"retryOnTooManyRequests"`
+	MaxRetries              *int   `yaml:"maxRetries"`
 }
 
 func (c YAMLAzure) Parse(configDir string) (Azure, error) {
@@ -147,6 +148,17 @@ func (c YAMLAzure) Parse(configDir string) (Azure, error) {
 	}
 
 	conf.RetryOnTooManyRequests = c.RetryOnTooManyRequests
+	{
+		const defaultMaxRetries = 5
+		maxRetries := defaultMaxRetries
+		if override := c.MaxRetries; override != nil {
+			if *override <= 0 {
+				return Azure{}, errorx.IllegalState.New("Max retries number must be positive")
+			}
+			maxRetries = *override
+		}
+		conf.MaxRetries = maxRetries
+	}
 
 	return conf, nil
 }
@@ -294,7 +306,6 @@ func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
 		return AnkiNoteType{}, err
 	}
 
-	// TODO: ensure fields have unique names
 	fields := make([]AnkiNoteField, len(t.Fields))
 	fieldsByName := make(map[string]AnkiNoteField, len(t.Fields))
 	for i, field := range t.Fields {
@@ -311,7 +322,6 @@ func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
 		fieldsByName[parsed.Name] = parsed
 	}
 
-	// TODO: ensure templates have unique names
 	templates := make([]AnkiCardTemplate, len(t.Templates))
 	for i, template := range t.Templates {
 		parsed, err := template.Parse(fieldsByName)

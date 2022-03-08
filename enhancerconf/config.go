@@ -22,6 +22,7 @@ type Azure struct {
 
 	LogRequests            bool
 	RetryOnTooManyRequests bool
+	MaxRetries             int
 }
 
 type Anki struct {

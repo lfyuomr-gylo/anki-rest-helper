@@ -38,11 +38,10 @@ func (api api) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechRe
 
 		var audio []byte
 		var err error
-		for {
+		for i := 0; i < api.conf.MaxRetries; i++ {
 			audio, err = api.doTextToSpeech(text)
 			if err != nil && api.conf.RetryOnTooManyRequests && errorx.IsOfType(err, TooManyRequests) {
-				// TODO: limit the number of retries.
-				log.Println("Got Too Many Requests from Azure. Retry the request...")
+				log.Println("Got Too Many Requests from Azure...")
 				continue
 			}
 			break
