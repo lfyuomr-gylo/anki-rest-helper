@@ -32,3 +32,9 @@ and put it to one of the following locations:
 To build the tool, you need to install [Go](https://go.dev/) 1.17 or beyond.
 Simply run `go build .` to get a binary for your platform.
 If you want to get binaries for different platforms, check out [release.sh](./release.sh).
+
+If you don't want to install Go on your system, try building the tool using Docker:
+
+```
+docker run --rm -v `pwd`:/projects/anki-helper -w /projects/anki-helper golang:1.17  ./release.sh
+```
