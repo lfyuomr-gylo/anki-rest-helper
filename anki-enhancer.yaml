@@ -1,4 +1,5 @@
 azure:
+  # Relative path to a file that contains Azure API key.
   apiKeyFile: azure-key.txt
   endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
   voice: es-MX-JorgeNeural
