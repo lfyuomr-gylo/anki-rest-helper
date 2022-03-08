@@ -1,12 +1,12 @@
-package enhance_test
+package ankihelper_test
 
 import (
 	"anki-rest-enhancer/ankiconnect"
 	"anki-rest-enhancer/ankiconnect/ankiconnectmock"
+	"anki-rest-enhancer/ankihelper"
+	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
 	"anki-rest-enhancer/azuretts/azurettsmock"
-	"anki-rest-enhancer/enhance"
-	"anki-rest-enhancer/enhancerconf"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -18,7 +18,7 @@ func TestEnhancer(t *testing.T) {
 type EnhancerSuite struct {
 	suite.Suite
 
-	Enhancer *enhance.Enhancer
+	Enhancer *ankihelper.Helper
 	TTSMock  *azurettsmock.API
 	AnkiMock *ankiconnectmock.API
 }
@@ -26,7 +26,7 @@ type EnhancerSuite struct {
 func (s *EnhancerSuite) SetupSuite() {
 	s.TTSMock = &azurettsmock.API{}
 	s.AnkiMock = &ankiconnectmock.API{}
-	s.Enhancer = enhance.NewEnhancer(s.AnkiMock, s.TTSMock)
+	s.Enhancer = ankihelper.NewHelper(s.AnkiMock, s.TTSMock)
 }
 
 func (s *EnhancerSuite) SetupTest() {
@@ -47,18 +47,18 @@ func (s *EnhancerSuite) TestNoteTypeCreation_AlreadyExists() {
 	}
 
 	// given:
-	actions := enhancerconf.Actions{NoteTypes: []enhancerconf.AnkiNoteType{{
+	actions := ankihelperconf.Actions{NoteTypes: []ankihelperconf.AnkiNoteType{{
 		Name:      modelName,
-		Fields:    []enhancerconf.AnkiNoteField{{Name: "Foo"}, {Name: "Bar"}},
-		Templates: []enhancerconf.AnkiCardTemplate{{Name: "Card1", ForFields: []enhancerconf.AnkiNoteField{{Name: "foo"}}}},
+		Fields:    []ankihelperconf.AnkiNoteField{{Name: "Foo"}, {Name: "Bar"}},
+		Templates: []ankihelperconf.AnkiCardTemplate{{Name: "Card1", ForFields: []ankihelperconf.AnkiNoteField{{Name: "foo"}}}},
 	}}}
 
 	// when:
-	err := s.Enhancer.Enhance(actions)
+	err := s.Enhancer.Run(actions)
 
 	// then:
 	s.Require().NoError(err)
-	s.Require().Empty(createModelCalls, "Enhancer should not attempt to recreate already existing note types")
+	s.Require().Empty(createModelCalls, "Helper should not attempt to recreate already existing note types")
 }
 
 func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() {
@@ -73,17 +73,17 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() 
 	}
 
 	// given:
-	fieldName := enhancerconf.AnkiNoteField{
+	fieldName := ankihelperconf.AnkiNoteField{
 		Name: "word",
 		Vars: map[string]string{"TITLE": "Word"},
 	}
-	actions := enhancerconf.Actions{NoteTypes: []enhancerconf.AnkiNoteType{{
+	actions := ankihelperconf.Actions{NoteTypes: []ankihelperconf.AnkiNoteType{{
 		Name:   "My Note Type",
 		CSS:    ".foo { font-size: large; }",
-		Fields: []enhancerconf.AnkiNoteField{fieldName},
-		Templates: []enhancerconf.AnkiCardTemplate{{
+		Fields: []ankihelperconf.AnkiNoteField{fieldName},
+		Templates: []ankihelperconf.AnkiCardTemplate{{
 			Name:      "WordTemplate",
-			ForFields: []enhancerconf.AnkiNoteField{fieldName},
+			ForFields: []ankihelperconf.AnkiNoteField{fieldName},
 			Front:     "$TITLE$: {{ $FIELD$ }}\nExample: {{ $EXAMPLE$ }}\nExplanation: {{ $EXAMPLE_EXPLANATION$ }}",
 			Back:      "{{ $FIELD_VOICEOVER$ }} {{ $EXAMPLE_VOICEOVER$ }}",
 		}},
@@ -101,7 +101,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() 
 	}
 
 	// when:
-	err := s.Enhancer.Enhance(actions)
+	err := s.Enhancer.Run(actions)
 
 	// then:
 	s.Require().NoError(err)
@@ -121,19 +121,19 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoExampleOrVoiceover()
 	}
 
 	// given:
-	fieldComment := enhancerconf.AnkiNoteField{
+	fieldComment := ankihelperconf.AnkiNoteField{
 		Name:          "comment",
 		SkipExample:   true,
 		SkipVoiceover: true,
 	}
 	const css = ".foo { font-size: large; }"
-	actions := enhancerconf.Actions{NoteTypes: []enhancerconf.AnkiNoteType{{
+	actions := ankihelperconf.Actions{NoteTypes: []ankihelperconf.AnkiNoteType{{
 		Name:   "MyModel",
 		CSS:    css,
-		Fields: []enhancerconf.AnkiNoteField{fieldComment},
-		Templates: []enhancerconf.AnkiCardTemplate{{
+		Fields: []ankihelperconf.AnkiNoteField{fieldComment},
+		Templates: []ankihelperconf.AnkiCardTemplate{{
 			Name:      "CommentTemplate",
-			ForFields: []enhancerconf.AnkiNoteField{fieldComment},
+			ForFields: []ankihelperconf.AnkiNoteField{fieldComment},
 			Front:     "Field Name: $FIELD$",
 			Back:      "Field Conent: {{ $FIELD$ }}",
 		}},
@@ -151,7 +151,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoExampleOrVoiceover()
 	}
 
 	// when:
-	err := s.Enhancer.Enhance(actions)
+	err := s.Enhancer.Run(actions)
 
 	// then:
 	s.Require().NoError(err)
@@ -167,9 +167,9 @@ func (s *EnhancerSuite) TestTTSGeneration_Simple() {
 		textField, audioField                    = "foo", "bar"
 		text, audio                              = "¡Hola, buenos días!", "abacabadabacaba"
 	)
-	actions := enhancerconf.Actions{
-		TTS: []enhancerconf.AnkiTTS{{
-			Fields: &enhancerconf.AnkiTTSFields{
+	actions := ankihelperconf.Actions{
+		TTS: []ankihelperconf.AnkiTTS{{
+			Fields: &ankihelperconf.AnkiTTSFields{
 				NoteFilter: query,
 				TextField:  textField,
 				AudioField: audioField,
@@ -206,7 +206,7 @@ func (s *EnhancerSuite) TestTTSGeneration_Simple() {
 	}
 
 	// when:
-	err := s.Enhancer.Enhance(actions)
+	err := s.Enhancer.Run(actions)
 
 	// then:
 	s.Require().NoError(err)
@@ -222,9 +222,9 @@ func (s *EnhancerSuite) TestTTSGeneration_SingleErrorIsIgnored() {
 		text1                                    = "¿Qué pasa?"
 		text2, audio2                            = "Ahora yo escribo el test", "abacabadabacaba"
 	)
-	actions := enhancerconf.Actions{
-		TTS: []enhancerconf.AnkiTTS{{
-			Fields: &enhancerconf.AnkiTTSFields{
+	actions := ankihelperconf.Actions{
+		TTS: []ankihelperconf.AnkiTTS{{
+			Fields: &ankihelperconf.AnkiTTSFields{
 				NoteFilter: query,
 				TextField:  textField,
 				AudioField: audioField,
@@ -264,7 +264,7 @@ func (s *EnhancerSuite) TestTTSGeneration_SingleErrorIsIgnored() {
 	}
 
 	// when:
-	err := s.Enhancer.Enhance(actions)
+	err := s.Enhancer.Run(actions)
 
 	// then:
 	s.Require().NoError(err)

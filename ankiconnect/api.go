@@ -1,7 +1,7 @@
 package ankiconnect
 
 import (
-	"anki-rest-enhancer/enhancerconf"
+	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/util/httputil"
 	"bytes"
 	"crypto/md5"
@@ -17,7 +17,7 @@ import (
 	"reflect"
 )
 
-func NewAPI(conf enhancerconf.Anki) *api {
+func NewAPI(conf ankihelperconf.Anki) *api {
 	client := &http.Client{Timeout: conf.RequestTimeout}
 	if conf.LogRequests {
 		client.Transport = httputil.NewLoggingRoundTripper(http.DefaultTransport)

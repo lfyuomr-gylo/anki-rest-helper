@@ -1,4 +1,4 @@
-package enhancerconf
+package ankihelperconf
 
 import (
 	"fmt"

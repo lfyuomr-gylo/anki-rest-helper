@@ -1,4 +1,4 @@
-package enhance
+package ankihelper
 
 import (
 	"fmt"

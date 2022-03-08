@@ -16,7 +16,7 @@ It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://g
 1. Download the [latest release](https://github.com/lfyuomr-gylo/anki-rest-helper/releases) of the tool for your platform
    or build it from source code using `go build .` command.
 2. Create your configuration file using [anki-helper.yaml](./anki-helper.yaml) as an example.
-   For full list of supported configuration parameters, see [enhancerconf/yaml.go](./enhancerconf/yaml.go).
+   For full list of supported configuration parameters, see [ankihelperconf/yaml.go](./ankihelperconf/yaml.go).
 3. Run Anki App with AnkiConnect plugin enabled
 4. Execute `path/to/anki-helper -config path/to/anki-helper.yaml` in your command line.
 

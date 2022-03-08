@@ -1,7 +1,7 @@
 package azuretts
 
 import (
-	"anki-rest-enhancer/enhancerconf"
+	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/util/httputil"
 	"bytes"
 	"encoding/xml"
@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func NewAPI(conf enhancerconf.Azure) *api {
+func NewAPI(conf ankihelperconf.Azure) *api {
 	client := &http.Client{
 		Timeout: conf.RequestTimeout,
 	}
@@ -26,7 +26,7 @@ func NewAPI(conf enhancerconf.Azure) *api {
 
 type api struct {
 	client *http.Client
-	conf   enhancerconf.Azure
+	conf   ankihelperconf.Azure
 }
 
 func (api api) TextToSpeech(texts map[string]struct{}) map[string]TextToSpeechResult {

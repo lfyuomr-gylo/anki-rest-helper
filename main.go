@@ -2,9 +2,9 @@ package main
 
 import (
 	"anki-rest-enhancer/ankiconnect"
+	"anki-rest-enhancer/ankihelper"
+	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
-	"anki-rest-enhancer/enhance"
-	"anki-rest-enhancer/enhancerconf"
 	"flag"
 	"github.com/joomcode/errorx"
 	"gopkg.in/yaml.v2"
@@ -40,7 +40,7 @@ func doMain() error {
 		return errorx.ExternalError.Wrap(err, "failed to read config file")
 	}
 
-	var rawConf enhancerconf.YAML
+	var rawConf ankihelperconf.YAML
 	if err := yaml.UnmarshalStrict(confData, &rawConf); err != nil {
 		return errorx.IllegalFormat.Wrap(err, "Malformed enhancer config")
 	}
@@ -52,8 +52,8 @@ func doMain() error {
 	azureTTS := azuretts.NewAPI(conf.Azure)
 	ankiConnect := ankiconnect.NewAPI(conf.Anki)
 
-	enhancer := enhance.NewEnhancer(ankiConnect, azureTTS)
-	return enhancer.Enhance(conf.Actions)
+	enhancer := ankihelper.NewHelper(ankiConnect, azureTTS)
+	return enhancer.Run(conf.Actions)
 }
 
 func findConfigFile() string {

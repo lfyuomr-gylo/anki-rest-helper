@@ -1,35 +1,35 @@
-package enhance
+package ankihelper
 
 import (
 	"anki-rest-enhancer/ankiconnect"
+	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
-	"anki-rest-enhancer/enhancerconf"
 	"anki-rest-enhancer/util/stringx"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"log"
 )
 
-func NewEnhancer(
+func NewHelper(
 	ankiConnect ankiconnect.API,
 	azureTTS azuretts.API,
-) *Enhancer {
-	return &Enhancer{
+) *Helper {
+	return &Helper{
 		ankiConnect: ankiConnect,
 		azureTTS:    azureTTS,
 	}
 }
 
-type Enhancer struct {
+type Helper struct {
 	ankiConnect ankiconnect.API
 	azureTTS    azuretts.API
 }
 
-func (e Enhancer) Enhance(conf enhancerconf.Actions) error {
-	if err := e.ensureNoteTypes(conf.NoteTypes); err != nil {
+func (h Helper) Run(conf ankihelperconf.Actions) error {
+	if err := h.ensureNoteTypes(conf.NoteTypes); err != nil {
 		return err
 	}
-	if err := e.generateTTS(conf); err != nil {
+	if err := h.generateTTS(conf); err != nil {
 		return err
 	}
 
@@ -44,20 +44,20 @@ type ttsTask struct {
 
 type ttsTaskSource struct {
 	NoteFilter, TextField, AudioField string
-	TextPreprocessors                 []enhancerconf.TextProcessor
+	TextPreprocessors                 []ankihelperconf.TextProcessor
 }
 
-func (e Enhancer) generateTTS(conf enhancerconf.Actions) error {
+func (h Helper) generateTTS(conf ankihelperconf.Actions) error {
 	log.Println("Generate test-to-speech...")
 
 	// 0. Determine how to look for notes with missing Audio
-	taskSources, err := e.getTTSTaskSources(conf)
+	taskSources, err := h.getTTSTaskSources(conf)
 	if err != nil {
 		return err
 	}
 
 	// 1. Find all the notes with missing audio in Anki
-	ttsTasks, err := e.findTTSTasks(taskSources)
+	ttsTasks, err := h.findTTSTasks(taskSources)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (e Enhancer) generateTTS(conf enhancerconf.Actions) error {
 	for task := range ttsTasks {
 		texts[task.Text] = struct{}{}
 	}
-	textToSpeech := e.azureTTS.TextToSpeech(texts)
+	textToSpeech := h.azureTTS.TextToSpeech(texts)
 
 	// 3. Update Anki Cards
 	var succeeded, failed int
@@ -82,7 +82,7 @@ func (e Enhancer) generateTTS(conf enhancerconf.Actions) error {
 			failed++
 			continue
 		}
-		err := e.ankiConnect.UpdateNoteFields(task.NoteID, map[string]ankiconnect.FieldUpdate{
+		err := h.ankiConnect.UpdateNoteFields(task.NoteID, map[string]ankiconnect.FieldUpdate{
 			task.TargetFieldName: {AudioData: speech.AudioMP3},
 		})
 		if err != nil {
@@ -97,8 +97,8 @@ func (e Enhancer) generateTTS(conf enhancerconf.Actions) error {
 	return nil
 }
 
-func (e Enhancer) getTTSTaskSources(conf enhancerconf.Actions) ([]ttsTaskSource, error) {
-	noteTypeByName := map[string]enhancerconf.AnkiNoteType{}
+func (h Helper) getTTSTaskSources(conf ankihelperconf.Actions) ([]ttsTaskSource, error) {
+	noteTypeByName := map[string]ankihelperconf.AnkiNoteType{}
 	for _, noteType := range conf.NoteTypes {
 		noteTypeByName[noteType.Name] = noteType
 	}
@@ -121,7 +121,7 @@ func (e Enhancer) getTTSTaskSources(conf enhancerconf.Actions) ([]ttsTaskSource,
 				return nil, errorx.IllegalState.New("Broken generated note type reference %q in TTS #%d", typeName, i)
 			}
 			for _, field := range noteType.Fields {
-				names := e.fieldNames(field)
+				names := h.fieldNames(field)
 				if names.Field != "" && names.FieldVoiceover != "" {
 					taskSources = append(taskSources, ttsTaskSource{
 						NoteFilter:        fmt.Sprintf(`"note:%s" "%s:_*" "%s:"`, typeName, names.Field, names.FieldVoiceover),
@@ -146,15 +146,15 @@ func (e Enhancer) getTTSTaskSources(conf enhancerconf.Actions) ([]ttsTaskSource,
 	return taskSources, nil
 }
 
-func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) (map[ttsTask]struct{}, error) {
+func (h Helper) findTTSTasks(taskSources []ttsTaskSource) (map[ttsTask]struct{}, error) {
 	ttsTasks := make(map[ttsTask]struct{})
 	for i, tts := range taskSources {
-		noteIDs, err := e.ankiConnect.FindNotes(tts.NoteFilter)
+		noteIDs, err := h.ankiConnect.FindNotes(tts.NoteFilter)
 		if err != nil {
 			return nil, errorx.Decorate(err, "failed to find notes matching filter for TTS #%d", i)
 		}
 
-		notes, err := e.ankiConnect.NotesInfo(noteIDs)
+		notes, err := h.ankiConnect.NotesInfo(noteIDs)
 		if err != nil {
 			return nil, errorx.Decorate(err, "failed to obtain notes matching filter for TTS #%d", i)
 		}
@@ -179,14 +179,14 @@ func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) (map[ttsTask]struct{
 	return ttsTasks, nil
 }
 
-func (e Enhancer) ensureNoteTypes(noteTypes []enhancerconf.AnkiNoteType) error {
+func (h Helper) ensureNoteTypes(noteTypes []ankihelperconf.AnkiNoteType) error {
 	if len(noteTypes) == 0 {
 		log.Println("No note types defined in the configuration. Skip note type creation.")
 		return nil
 	}
 
 	log.Println("Ensure note types...")
-	existingNoteTypeNamesSlice, err := e.ankiConnect.ModelNames()
+	existingNoteTypeNamesSlice, err := h.ankiConnect.ModelNames()
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (e Enhancer) ensureNoteTypes(noteTypes []enhancerconf.AnkiNoteType) error {
 			continue
 		}
 
-		if err := e.createNoteType(noteType); err != nil {
+		if err := h.createNoteType(noteType); err != nil {
 			return errorx.Decorate(err, "failed to create type type %q", noteType.Name)
 		}
 		created++
@@ -213,13 +213,13 @@ func (e Enhancer) ensureNoteTypes(noteTypes []enhancerconf.AnkiNoteType) error {
 	return nil
 }
 
-func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
+func (h Helper) createNoteType(conf ankihelperconf.AnkiNoteType) error {
 	// Generate field names. First, we add Field, FieldExample and FieldExplanation
 	// Voiceover fields are added at the end of the field list since they are not intended for manual modification
 	var fieldNames []string
 	var voiceoverFields []string
 	for _, field := range conf.Fields {
-		names := e.fieldNames(field)
+		names := h.fieldNames(field)
 		fieldNames = stringx.AppendNonEmpty(fieldNames, names.Field, names.Example, names.ExampleExplanation)
 		voiceoverFields = stringx.AppendNonEmpty(voiceoverFields, names.FieldVoiceover, names.ExampleVoiceover)
 	}
@@ -228,7 +228,7 @@ func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
 	templates := make([]ankiconnect.CreateModelCardTemplate, 0, len(conf.Templates))
 	for _, template := range conf.Templates {
 		for _, field := range template.ForFields {
-			names := e.fieldNames(field)
+			names := h.fieldNames(field)
 			substitutions := map[string]string{
 				"FIELD":               names.Field,
 				"FIELD_VOICEOVER":     names.FieldVoiceover,
@@ -248,7 +248,7 @@ func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
 			if err != nil {
 				return errorx.Decorate(err, "failed to build card template name for template %q and field %q", template.Name, field.Name)
 			}
-			if err := enhancerconf.ValidateName(templateName); err != nil {
+			if err := ankihelperconf.ValidateName(templateName); err != nil {
 				return errorx.Decorate(err, "got invalid template name after variables substitution: %s", templateName)
 			}
 			front, err := substituteVariables(template.Front, substitutions)
@@ -276,14 +276,14 @@ func (e Enhancer) createNoteType(conf enhancerconf.AnkiNoteType) error {
 		CardTemplates: templates,
 	}
 
-	return e.ankiConnect.CreateModel(params)
+	return h.ankiConnect.CreateModel(params)
 }
 
 type FieldNames struct {
 	Field, FieldVoiceover, Example, ExampleVoiceover, ExampleExplanation string
 }
 
-func (e Enhancer) fieldNames(field enhancerconf.AnkiNoteField) FieldNames {
+func (h Helper) fieldNames(field ankihelperconf.AnkiNoteField) FieldNames {
 	const voiceoverSuffix = "Voiceover"
 	const exampleSuffix = "Example"
 	const explanationSuffix = "Explanation"
