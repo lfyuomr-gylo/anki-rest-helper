@@ -180,6 +180,11 @@ func (e Enhancer) findTTSTasks(taskSources []ttsTaskSource) (map[ttsTask]struct{
 }
 
 func (e Enhancer) ensureNoteTypes(noteTypes []enhancerconf.AnkiNoteType) error {
+	if len(noteTypes) == 0 {
+		log.Println("No note types defined in the configuration. Skip note type creation.")
+		return nil
+	}
+
 	log.Println("Ensure note types...")
 	existingNoteTypeNamesSlice, err := e.ankiConnect.ModelNames()
 	if err != nil {

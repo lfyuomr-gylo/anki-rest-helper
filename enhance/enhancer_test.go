@@ -3,6 +3,7 @@ package enhance_test
 import (
 	"anki-rest-enhancer/ankiconnect"
 	"anki-rest-enhancer/ankiconnect/ankiconnectmock"
+	"anki-rest-enhancer/azuretts"
 	"anki-rest-enhancer/azuretts/azurettsmock"
 	"anki-rest-enhancer/enhance"
 	"anki-rest-enhancer/enhancerconf"
@@ -156,4 +157,60 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoExampleOrVoiceover()
 	s.Require().NoError(err)
 	s.Require().Len(createModelCalls, 1)
 	s.Require().Equal(expectedModel, createModelCalls[0])
+}
+
+func (s *EnhancerSuite) TestTTSGeneration_Simple() {
+	// given:
+	const (
+		query                         = "foo:_* fooVoiceover:"
+		noteID     ankiconnect.NoteID = 42
+		textField                     = "foo"
+		audioField                    = "bar"
+		text                          = "¡Hola, buenos días!"
+		audio                         = "abacabadabacaba"
+	)
+	actions := enhancerconf.Actions{
+		TTS: []enhancerconf.AnkiTTS{{
+			Fields: &enhancerconf.AnkiTTSFields{
+				NoteFilter: query,
+				TextField:  textField,
+				AudioField: audioField,
+			},
+		}},
+		NoteTypes: nil,
+	}
+	expectedNoteUpdate := map[string]ankiconnect.FieldUpdate{audioField: {AudioData: []byte(audio)}}
+
+	// setup:
+	s.AnkiMock.FindNotesFunc = func(aQuery string) ([]ankiconnect.NoteID, error) {
+		s.Require().Equal(query, aQuery)
+		return []ankiconnect.NoteID{noteID}, nil
+	}
+	s.AnkiMock.NotesInfoFunc = func(noteIDs []ankiconnect.NoteID) (map[ankiconnect.NoteID]ankiconnect.NoteInfo, error) {
+		s.Require().Equal([]ankiconnect.NoteID{noteID}, noteIDs)
+		return map[ankiconnect.NoteID]ankiconnect.NoteInfo{
+			noteID: {Fields: map[string]string{
+				textField:  text,
+				audioField: "",
+			}},
+		}, nil
+	}
+	s.TTSMock.TextToSpeechFunc = func(texts map[string]struct{}) map[string]azuretts.TextToSpeechResult {
+		s.Require().Equal(map[string]struct{}{text: {}}, texts)
+		return map[string]azuretts.TextToSpeechResult{text: {AudioMP3: []byte(audio)}}
+	}
+	var updatedFields map[string]ankiconnect.FieldUpdate
+	s.AnkiMock.UpdateNoteFieldsFunc = func(aNoteID ankiconnect.NoteID, fields map[string]ankiconnect.FieldUpdate) error {
+		s.Require().Equal(noteID, aNoteID)
+		s.Require().Nil(updatedFields, "notes should be updated at most once")
+		updatedFields = fields
+		return nil
+	}
+
+	// when:
+	err := s.Enhancer.Enhance(actions)
+
+	// then:
+	s.Require().NoError(err)
+	s.Require().Equal(expectedNoteUpdate, updatedFields)
 }
