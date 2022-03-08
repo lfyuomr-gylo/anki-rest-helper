@@ -15,6 +15,7 @@ It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://g
 
 1. Run Anki App with AnkiConnect plugin enabled
 2. Create your configuration file, use [anki-enhancer.yaml](./anki-enhancer.yaml) as an example.
+   For full list of supported configuration parameters, see [enhancerconf/yaml.go](./enhancerconf/yaml.go).
 3. Name your config file ``anki-enhancer.yaml`` and put it either in current directory or 
    at your user's config or home directory. 
 4. Execute `go run .`
