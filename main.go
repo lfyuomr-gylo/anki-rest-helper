@@ -78,7 +78,7 @@ func findConfigFile() string {
 		dirs = append(dirs, dir)
 	}
 
-	const defaultConfigFileName = "anki-enhancer.yaml"
+	const defaultConfigFileName = "anki-helper.yaml"
 	for _, dir := range dirs {
 		path := filepath.Join(dir, defaultConfigFileName)
 		log.Printf("Check for config file at %s", path)
