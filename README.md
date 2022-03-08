@@ -37,4 +37,6 @@ If you don't want to install Go on your system, try building the tool using Dock
 
 ```
 docker run --rm -v `pwd`:/projects/anki-helper -w /projects/anki-helper golang:1.17  ./release.sh
+chown -R `whoami` build/
+chmod -R +x build/
 ```
