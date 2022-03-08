@@ -1,6 +1,6 @@
 # Anki REST Helper
 
-This is my personal Anki CLI helper. I use it to generate/enrich my Anki notes.
+This is my personal Anki CLI helper. I use it to generate/enrich my [Anki](https://apps.ankiweb.net/) notes.
 
 It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://github.com/FooSoft/anki-connect). 
 
@@ -17,7 +17,7 @@ It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://g
    or build it from source code using `go build .` command.
 2. Create your configuration file using [anki-helper.yaml](./anki-helper.yaml) as an example.
    For full list of supported configuration parameters, see [ankihelperconf/yaml.go](./ankihelperconf/yaml.go).
-3. Run Anki App with AnkiConnect plugin enabled
+3. Run [Anki](https://apps.ankiweb.net/) with [AnkiConnect plugin](https://github.com/FooSoft/anki-connect) enabled
 4. Execute `path/to/anki-helper -config path/to/anki-helper.yaml` in your command line.
 
 If you don't want to pass config file path to the tool at every execution, rename the file to `anki-helper.yaml`
