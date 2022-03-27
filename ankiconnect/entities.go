@@ -45,6 +45,15 @@ type findNotesParams struct {
 type findNotesResult []NoteID
 
 //goland:noinspection GoUnusedGlobalVariable
+var actionFindCards = declareAction("findCards", findCardsParams{}, findCardsResult{})
+
+type findCardsParams struct {
+	Query string `json:"query"`
+}
+
+type findCardsResult []CardID
+
+//goland:noinspection GoUnusedGlobalVariable
 var actionNotesInfo = declareAction("notesInfo", notesInfoParams{}, notesInfoResult{})
 
 type notesInfoParams struct {
@@ -106,4 +115,16 @@ type createModelParams = CreateModelParams
 
 type createModelResult struct {
 	// nop -- we don't need createModel action result at the time, so don't do any unmarshalling here
+}
+
+//goland:noinspection GoUnusedGlobalVariable
+var actionChangeDeck = declareAction("changeDeck", changeDeckParams{}, changeDeckResult{})
+
+type changeDeckParams struct {
+	Deck  string   `json:"deck"`
+	Cards []CardID `json:"cards"`
+}
+
+type changeDeckResult struct {
+	// nop
 }

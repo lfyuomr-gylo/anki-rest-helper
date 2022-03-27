@@ -44,6 +44,14 @@ func (api api) FindNotes(query string) ([]NoteID, error) {
 	return result.(findNotesResult), nil
 }
 
+func (api api) FindCards(query string) ([]CardID, error) {
+	result, err := api.doReq(findCardsParams{Query: query})
+	if err != nil {
+		return nil, err
+	}
+	return result.(findCardsResult), nil
+}
+
 type NoteInfo struct {
 	Fields map[string]string
 }
@@ -101,6 +109,14 @@ func (api api) ModelNames() ([]string, error) {
 
 func (api api) CreateModel(params CreateModelParams) error {
 	_, err := api.doReq(params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (api api) ChangeDeck(deckName string, cardIDs []CardID) error {
+	_, err := api.doReq(changeDeckParams{Deck: deckName, Cards: cardIDs})
 	if err != nil {
 		return err
 	}

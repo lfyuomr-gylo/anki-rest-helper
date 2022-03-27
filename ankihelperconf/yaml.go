@@ -1,6 +1,7 @@
 package ankihelperconf
 
 import (
+	"anki-rest-enhancer/util/stringx"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"io"
@@ -206,8 +207,9 @@ func (c YAMLAnki) Parse() (Anki, error) {
 }
 
 type YAMLActions struct {
-	TTS       []YAMLAnkiTTS      `yaml:"tts"`
-	NoteTypes []YAMLAnkiNoteType `yaml:"noteTypes"`
+	TTS               []YAMLAnkiTTS           `yaml:"tts"`
+	NoteTypes         []YAMLAnkiNoteType      `yaml:"noteTypes"`
+	CardsOrganization []YAMLNotesOrganization `yaml:"cardsOrganization"`
 }
 
 func (e YAMLActions) Parse() (Actions, error) {
@@ -227,6 +229,14 @@ func (e YAMLActions) Parse() (Actions, error) {
 			return Actions{}, errorx.Decorate(err, "invalid note type #%d", i)
 		}
 		actions.NoteTypes = append(actions.NoteTypes, parsed)
+	}
+
+	for i, orgRule := range e.CardsOrganization {
+		parsed, err := orgRule.Parse()
+		if err != nil {
+			return Actions{}, errorx.Decorate(err, "invalid notes organization rule #%d", i)
+		}
+		actions.CardsOrganization = append(actions.CardsOrganization, parsed)
 	}
 
 	return actions, nil
@@ -375,6 +385,26 @@ func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (Anki
 		ForFields: fields,
 		Front:     t.Front,
 		Back:      t.Back,
+	}, nil
+}
+
+type YAMLNotesOrganization struct {
+	Filter     string `yaml:"filter"`
+	TargetDeck string `yaml:"targetDeck"`
+}
+
+func (o YAMLNotesOrganization) Parse() (NotesOrganizationRule, error) {
+	filter := o.Filter
+	if stringx.IsBlank(filter) {
+		return NotesOrganizationRule{}, errorx.IllegalFormat.New("filter is missing")
+	}
+	targetDeck := o.TargetDeck
+	if stringx.IsBlank(targetDeck) {
+		return NotesOrganizationRule{}, errorx.IllegalFormat.New("target deck is missing")
+	}
+	return NotesOrganizationRule{
+		NotesFilter:    filter,
+		TargetDeckName: targetDeck,
 	}, nil
 }
 

@@ -32,7 +32,9 @@ func (h Helper) Run(conf ankihelperconf.Actions) error {
 	if err := h.generateTTS(conf); err != nil {
 		return err
 	}
-
+	if err := h.organizeCards(conf.CardsOrganization); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -301,4 +303,36 @@ func (h Helper) fieldNames(field ankihelperconf.AnkiNoteField) FieldNames {
 	}
 
 	return names
+}
+
+func (h Helper) organizeCards(rules []ankihelperconf.NotesOrganizationRule) error {
+	log.Println("Applying notes organization rules...")
+	for i, rule := range rules {
+		log.Printf("Applying %d-th notes organization rule...", i)
+		if err := h.applyOrganizationRule(rule); err != nil {
+			return errorx.Decorate(err, "failed to apply %d-th notes organization rule", i)
+		}
+	}
+	log.Println("Successfully applied notes organization rules.")
+	return nil
+}
+
+func (h Helper) applyOrganizationRule(rule ankihelperconf.NotesOrganizationRule) error {
+	targetDeck := rule.TargetDeckName
+	query := fmt.Sprintf(`-"deck:%s" %s`, targetDeck, rule.NotesFilter)
+	cardIDs, err := h.ankiConnect.FindCards(query)
+	if err != nil {
+		return err
+	}
+	if len(cardIDs) == 0 {
+		log.Printf("Found no cards to be moved to deck %s.", targetDeck)
+		return nil
+	}
+	log.Printf("Found %d cards to be moved to deck %s", len(cardIDs), targetDeck)
+
+	if err := h.ankiConnect.ChangeDeck(targetDeck, cardIDs); err != nil {
+		return err
+	}
+	log.Printf("Successfully moved %d cards to deck %s", len(cardIDs), targetDeck)
+	return nil
 }

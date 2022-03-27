@@ -1,5 +1,7 @@
 package stringx
 
+import "unicode"
+
 // AppendNonEmpty appends all non-empty strings to the specified slice and returns it.
 // Empty strings already present in the slice are preserved.
 func AppendNonEmpty(dst []string, strings ...string) []string {
@@ -23,4 +25,13 @@ func RemoveEmptyValues(m map[string]string) {
 	for key := range keysToRemove {
 		delete(m, key)
 	}
+}
+
+func IsBlank(s string) bool {
+	for _, char := range s {
+		if !unicode.IsSpace(char) {
+			return false
+		}
+	}
+	return true
 }

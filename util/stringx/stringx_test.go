@@ -2,6 +2,7 @@ package stringx
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -38,4 +39,17 @@ func TestRemoveEmptyValues(t *testing.T) {
 			require.Equal(t, test.expected, test.initial)
 		})
 	}
+}
+
+func TestIsBlank(t *testing.T) {
+	assert.True(t, IsBlank(""))
+	assert.True(t, IsBlank(" "))
+	assert.True(t, IsBlank("  "))
+	assert.True(t, IsBlank(" \t "))
+	assert.True(t, IsBlank(" \r\n "))
+	assert.True(t, IsBlank("\r\n"))
+
+	assert.False(t, IsBlank("foo"))
+	assert.False(t, IsBlank(" foo "))
+	assert.False(t, IsBlank(" foo \n"))
 }

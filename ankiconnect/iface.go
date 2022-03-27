@@ -2,6 +2,8 @@ package ankiconnect
 
 type NoteID int64
 
+type CardID int64
+
 type FieldUpdate struct {
 	// one of
 	Value     string
@@ -24,8 +26,10 @@ type CreateModelCardTemplate struct {
 
 type API interface {
 	FindNotes(query string) ([]NoteID, error)
+	FindCards(query string) ([]CardID, error)
 	NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error)
 	UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) error
 	ModelNames() ([]string, error)
 	CreateModel(params CreateModelParams) error
+	ChangeDeck(deckName string, noteIDs []CardID) error
 }

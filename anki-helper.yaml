@@ -8,7 +8,7 @@ azure:
   retryOnTooManyRequests: true
 #  logRequests: true
 anki:
-  #  logRequests: true
+  # logRequests: true
 actions:
   tts:
     - forGeneratedNoteType: SpanishVerb
@@ -252,3 +252,7 @@ actions:
          font-weight: bold;
          color: blue;
         }
+
+  cardsOrganization:
+    - filter: note:SpanishVerb*
+      targetDeck: Spanish::Verbs

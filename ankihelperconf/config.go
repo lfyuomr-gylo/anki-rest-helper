@@ -32,8 +32,9 @@ type Anki struct {
 }
 
 type Actions struct {
-	TTS       []AnkiTTS
-	NoteTypes []AnkiNoteType
+	TTS               []AnkiTTS
+	NoteTypes         []AnkiNoteType
+	CardsOrganization []NotesOrganizationRule
 }
 
 type AnkiTTS struct {
@@ -62,6 +63,11 @@ type AnkiCardTemplate struct {
 	ForFields []AnkiNoteField
 	Front     string
 	Back      string
+}
+
+type NotesOrganizationRule struct {
+	NotesFilter    string
+	TargetDeckName string
 }
 
 type TextProcessor interface {
