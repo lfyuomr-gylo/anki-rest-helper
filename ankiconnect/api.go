@@ -136,7 +136,7 @@ func (api api) doReq(params interface{}) (interface{}, error) {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech api request timed out")
 		}
-		return nil, errorx.ExternalError.Wrap(err, "Azure api request failed")
+		return nil, errorx.ExternalError.Wrap(err, "Anki API request failed")
 	}
 
 	body, err := io.ReadAll(resp.Body)
