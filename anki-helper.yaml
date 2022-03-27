@@ -254,5 +254,7 @@ actions:
         }
 
   cardsOrganization:
+    - filter: -note:SpanishVerb*
+      targetDeck: Spanish::Other
     - filter: note:SpanishVerb*
       targetDeck: Spanish::Verbs
