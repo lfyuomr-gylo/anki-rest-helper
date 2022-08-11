@@ -9,6 +9,9 @@ azure:
   retryOnTooManyRequests: true
 #  logRequests: true
 anki:
+  # NOTE: this is non-default port. If you didn't change it manually in yor plugin configuration,
+  #       remove the following line so that anki-helper uses default AnkiConnect address.
+  connectUrl: 'http://localhost:8766'
   # logRequests: true
 actions:
   tts:
@@ -16,8 +19,10 @@ actions:
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
-        - regexp: '\{\{\s*(?P<word>[^{}])\s*\}\}'
-          replacement: '${word}'
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
     - textField: Word
       audioField: WordVoiceover
       textPreprocessing:
@@ -40,8 +45,10 @@ actions:
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
-        - regexp: '\{\{\s*(?P<word>[^{}])\s*\}\}'
-          replacement: '${word}'
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
     - textField: Example1
       audioField: Example1Voiceover
       noteFilter: 'Example1:_* "Example1Voiceover: "'
@@ -59,8 +66,10 @@ actions:
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
-        - regexp: '\{\{\s*(?P<word>[^{}])\s*\}\}'
-          replacement: '${word}'
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
     - textField: Male
       audioField: MaleVoiceover
     - textField: Female
