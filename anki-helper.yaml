@@ -28,48 +28,32 @@ actions:
       textPreprocessing:
         - regexp: '\s+'
           replacement: ' '
-    - textField: Word
-      audioField: WordVoiceover
-      noteFilter: 'Word:_* "WordVoiceover: "'
+    - textField: Example1
+      audioField: Example1Voiceover
       textPreprocessing:
         - regexp: '</?div>'
           replacement: ''
         - regexp: '&nbsp;'
           replacement: ''
-        - regexp: '\{\{\s*(?P<word>[^{}])\s*\}\}'
-          replacement: '${word}'
-        - regexp: '\s+'
-          replacement: ' '
-    - textField: Example1
-      audioField: Example1Voiceover
-      textPreprocessing:
-        - regexp: '\s+'
-          replacement: ' '
         - regexp: '\{\{'
           replacement: ''
         - regexp: '\}\}'
           replacement: ''
-    - textField: Example1
-      audioField: Example1Voiceover
-      noteFilter: 'Example1:_* "Example1Voiceover: "'
-      textPreprocessing:
-        - regexp: '</?div>'
-          replacement: ''
-        - regexp: '&nbsp;'
-          replacement: ''
-        - regexp: '\{\{(?P<word>[^{}])\}\}'
-          replacement: '${word}'
         - regexp: '\s+'
           replacement: ' '
     - textField: Example2
       audioField: Example2Voiceover
       textPreprocessing:
-        - regexp: '\s+'
-          replacement: ' '
+        - regexp: '</?div>'
+          replacement: ''
+        - regexp: '&nbsp;'
+          replacement: ''
         - regexp: '\{\{'
           replacement: ''
         - regexp: '\}\}'
           replacement: ''
+        - regexp: '\s+'
+          replacement: ' '
     - textField: Male
       audioField: MaleVoiceover
     - textField: Female
