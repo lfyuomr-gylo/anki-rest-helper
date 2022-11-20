@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"time"
 )
 
 func NewAPI(conf ankihelperconf.Anki) *api {
@@ -37,7 +38,7 @@ type api struct {
 var _ API = (*api)(nil)
 
 func (api api) FindNotes(query string) ([]NoteID, error) {
-	result, err := api.doReq(findNotesParams{Query: query})
+	result, err := api.doReq(findNotesParams{Query: query}, 5)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (api api) FindNotes(query string) ([]NoteID, error) {
 }
 
 func (api api) FindCards(query string) ([]CardID, error) {
-	result, err := api.doReq(findCardsParams{Query: query})
+	result, err := api.doReq(findCardsParams{Query: query}, 5)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +58,11 @@ type NoteInfo struct {
 }
 
 func (api api) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
-	rawResult, err := api.doReq(notesInfoParams{NoteIDs: noteIDs})
+	if len(noteIDs) == 0 {
+		return nil, nil
+	}
+
+	rawResult, err := api.doReq(notesInfoParams{NoteIDs: noteIDs}, 5)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +100,12 @@ func (api api) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 		}
 	}
 
-	_, err := api.doReq(params)
+	_, err := api.doReq(params, 5)
 	return err
 }
 
 func (api api) ModelNames() ([]string, error) {
-	rawResult, err := api.doReq(modelNamesParams{})
+	rawResult, err := api.doReq(modelNamesParams{}, 5)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +113,7 @@ func (api api) ModelNames() ([]string, error) {
 }
 
 func (api api) CreateModel(params CreateModelParams) error {
-	_, err := api.doReq(params)
+	_, err := api.doReq(params, 1) // NOTE: this request is not idempotent so it should not be retried
 	if err != nil {
 		return err
 	}
@@ -116,14 +121,14 @@ func (api api) CreateModel(params CreateModelParams) error {
 }
 
 func (api api) ChangeDeck(deckName string, cardIDs []CardID) error {
-	_, err := api.doReq(changeDeckParams{Deck: deckName, Cards: cardIDs})
+	_, err := api.doReq(changeDeckParams{Deck: deckName, Cards: cardIDs}, 5)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (api api) doReq(params interface{}) (interface{}, error) {
+func (api api) doReq(params interface{}, maxAttempts int) (interface{}, error) {
 	actionName, ok := actionParamsMapping[reflect.TypeOf(params)]
 	if !ok {
 		panic(errorx.IllegalState.New("got action params of unexpected type: %+v", params))
@@ -137,22 +142,9 @@ func (api api) doReq(params interface{}) (interface{}, error) {
 		return nil, errorx.IllegalState.Wrap(err, "failed to marshal AnkiConnect request")
 	}
 
-	req := &http.Request{
-		Method: http.MethodPost,
-		URL:    api.url,
-		Header: http.Header{
-			"Content-Type": []string{"application/json"},
-		},
-		ContentLength: int64(len(marshalled)),
-		Body:          io.NopCloser(bytes.NewReader(marshalled)),
-	}
-
-	resp, err := api.client.Do(req)
+	resp, err := api.doReqWithBodyAndRetry(marshalled, maxAttempts)
 	if err != nil {
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech api request timed out")
-		}
-		return nil, errorx.ExternalError.Wrap(err, "Anki API request failed")
+		return nil, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -180,4 +172,58 @@ func (api api) doReq(params interface{}) (interface{}, error) {
 		return nil, errorx.IllegalFormat.Wrap(err, "Failed to unmarshal action result")
 	}
 	return resultPtrVal.Elem().Interface(), nil
+}
+
+func (api api) doReqWithBodyAndRetry(body []byte, maxAttempts int) (*http.Response, error) {
+	if maxAttempts <= 0 {
+		panic(errorx.IllegalArgument.New("expected positive maxAttempts but got %d", maxAttempts))
+	}
+
+	var errs []error
+	retryDelay := 100 * time.Millisecond
+	for i := 0; i < maxAttempts; i++ {
+		if i > 0 {
+			log.Printf("Retrying Anki request error in %s...", retryDelay)
+			time.Sleep(retryDelay)
+			retryDelay = time.Duration(1.5*float64(retryDelay.Milliseconds())) * time.Millisecond
+		}
+		resp, err := api.doReqWithBody(body)
+		if err == nil {
+			return resp, nil
+		}
+		errs = append(errs, err)
+	}
+	return nil, errorx.WrapMany(errorx.ExternalError, fmt.Sprintf("Failed to do Anki request %d times", maxAttempts), errs...)
+}
+
+func (api api) doReqWithBody(reqBody []byte) (*http.Response, error) {
+	req := &http.Request{
+		Method: http.MethodPost,
+		URL:    api.url,
+		Header: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
+		ContentLength: int64(len(reqBody)),
+		Body:          io.NopCloser(bytes.NewReader(reqBody)),
+		GetBody: func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(reqBody)), nil
+		},
+	}
+
+	resp, err := api.client.Do(req)
+	if err != nil {
+		if timeoutErr, ok := err.(net.Error); ok && timeoutErr.Timeout() {
+			return nil, errorx.TimeoutElapsed.Wrap(err, "Text-to-speech api request timed out")
+		}
+		return nil, errorx.ExternalError.Wrap(err, "Anki API request failed")
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errorx.ExternalError.Wrap(err, "Failed to read response body")
+	}
+
+	resp.Body = io.NopCloser(bytes.NewReader(respBody))
+	return resp, nil
 }
