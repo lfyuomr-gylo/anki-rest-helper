@@ -12,12 +12,20 @@ It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://g
 
 # How to use it
 
-1. Download the [latest release](https://github.com/lfyuomr-gylo/anki-rest-helper/releases) of the tool for your platform
+1. Install [AnkiConnect plugin](https://github.com/FooSoft/anki-connect).
+
+2. (to use text-to-speech feature) Sign Up in Microsoft Azure and create a free text-to-speech resource.
+   For the details, see the [documentation](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/overview#get-started).
+
+3. Download the [latest release](https://github.com/lfyuomr-gylo/anki-rest-helper/releases) of the tool for your platform
    or build it from source code using `go build .` command.
-2. Create your configuration file using [anki-helper.yaml](./anki-helper.yaml) as an example.
+
+4. Create your configuration file using [anki-helper.yaml](./anki-helper.yaml) as an example.
    For full list of supported configuration parameters, see [ankihelperconf/yaml.go](./ankihelperconf/yaml.go).
-3. Run [Anki](https://apps.ankiweb.net/) with [AnkiConnect plugin](https://github.com/FooSoft/anki-connect) enabled
-4. Execute `path/to/anki-helper -config path/to/anki-helper.yaml` in your command line.
+
+5. Run [Anki](https://apps.ankiweb.net/) with [AnkiConnect plugin](https://github.com/FooSoft/anki-connect) enabled
+
+6. Execute `path/to/anki-helper -config path/to/anki-helper.yaml` in your command line.
 
 If you don't want to pass config file path to the tool at every execution, rename the file to `anki-helper.yaml`
 and put it to one of the following locations:
