@@ -75,7 +75,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() 
 	// given:
 	fieldName := ankihelperconf.AnkiNoteField{
 		Name: "word",
-		Vars: map[string]string{"TITLE": "Word"},
+		Vars: map[string]string{"TITLE": "Word", "MY_EMPTY_FIELD": ""},
 	}
 	actions := ankihelperconf.Actions{NoteTypes: []ankihelperconf.AnkiNoteType{{
 		Name:   "My Note Type",
@@ -84,7 +84,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() 
 		Templates: []ankihelperconf.AnkiCardTemplate{{
 			Name:      "WordTemplate",
 			ForFields: []ankihelperconf.AnkiNoteField{fieldName},
-			Front:     "$TITLE$: {{ $FIELD$ }}\nExample: {{ $EXAMPLE$ }}\nExplanation: {{ $EXAMPLE_EXPLANATION$ }}",
+			Front:     "$TITLE$: {{ $FIELD$ }}\nExample: {{ $EXAMPLE$ }}\nExplanation: {{ $EXAMPLE_EXPLANATION$ }}$MY_EMPTY_FIELD$",
 			Back:      "{{ $FIELD_VOICEOVER$ }} {{ $EXAMPLE_VOICEOVER$ }}",
 		}},
 	}}}

@@ -13,8 +13,8 @@ func AppendNonEmpty(dst []string, strings ...string) []string {
 	return dst
 }
 
-// RemoveEmptyValues modifies provided map by removing all keys with empty string values.
-func RemoveEmptyValues(m map[string]string) {
+// RemoveEmptyValuesInPlace modifies provided map by removing all keys with empty string values.
+func RemoveEmptyValuesInPlace(m map[string]string) map[string]string {
 	keysToRemove := make(map[string]struct{})
 	for key, val := range m {
 		if val == "" {
@@ -25,6 +25,8 @@ func RemoveEmptyValues(m map[string]string) {
 	for key := range keysToRemove {
 		delete(m, key)
 	}
+
+	return m
 }
 
 func IsBlank(s string) bool {

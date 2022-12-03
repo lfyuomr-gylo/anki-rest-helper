@@ -11,6 +11,8 @@ type API struct {
 	UpdateNoteFieldsFunc func(noteID ankiconnect.NoteID, fields map[string]ankiconnect.FieldUpdate) error
 	ModelNamesFunc       func() ([]string, error)
 	CreateModelFunc      func(params ankiconnect.CreateModelParams) error
+	FindCardsFunc        func(query string) ([]ankiconnect.CardID, error)
+	ChangeDeckFunc       func(deckName string, noteIDs []ankiconnect.CardID) error
 }
 
 var _ ankiconnect.API = (*API)(nil)
@@ -52,4 +54,18 @@ func (api *API) CreateModel(params ankiconnect.CreateModelParams) error {
 		return behaviour(params)
 	}
 	panic(errorx.Panic(errorx.NotImplemented.New("Mock behaviour is not set for method CreateModel")))
+}
+
+func (api *API) FindCards(query string) ([]ankiconnect.CardID, error) {
+	if behaviour := api.FindCardsFunc; behaviour != nil {
+		return behaviour(query)
+	}
+	panic(errorx.Panic(errorx.NotImplemented.New("Mock behaviour is not set for method FindCards")))
+}
+
+func (api *API) ChangeDeck(deckName string, noteIDs []ankiconnect.CardID) error {
+	if behaviour := api.ChangeDeckFunc; behaviour != nil {
+		return behaviour(deckName, noteIDs)
+	}
+	panic(errorx.Panic(errorx.NotImplemented.New("Mock behaviour is not set for method ChangeDeck")))
 }

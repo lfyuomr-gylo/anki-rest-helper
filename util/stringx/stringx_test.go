@@ -33,7 +33,7 @@ func TestRemoveEmptyValues(t *testing.T) {
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("Test_%02d", i), func(t *testing.T) {
 			// when:
-			RemoveEmptyValues(test.initial)
+			RemoveEmptyValuesInPlace(test.initial)
 
 			// then:
 			require.Equal(t, test.expected, test.initial)

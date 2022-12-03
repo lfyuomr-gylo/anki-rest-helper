@@ -231,20 +231,19 @@ func (h Helper) createNoteType(conf ankihelperconf.AnkiNoteType) error {
 	for _, template := range conf.Templates {
 		for _, field := range template.ForFields {
 			names := h.fieldNames(field)
-			substitutions := map[string]string{
+			substitutions := stringx.RemoveEmptyValuesInPlace(map[string]string{
 				"FIELD":               names.Field,
 				"FIELD_VOICEOVER":     names.FieldVoiceover,
 				"EXAMPLE":             names.Example,
 				"EXAMPLE_VOICEOVER":   names.ExampleVoiceover,
 				"EXAMPLE_EXPLANATION": names.ExampleExplanation,
-			}
+			})
 			for name, val := range field.Vars {
 				if _, ok := substitutions[name]; ok {
 					return errorx.IllegalState.New("custom variable %q collides with a default variable in template %q", name, template.Name)
 				}
 				substitutions[name] = val
 			}
-			stringx.RemoveEmptyValues(substitutions)
 
 			templateName, err := substituteVariables(template.Name, substitutions)
 			if err != nil {
