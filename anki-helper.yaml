@@ -71,79 +71,53 @@ actions:
         #   FieldExample, FieldExampleVoiceover, FieldExampleExplanation (unless skipExample: true)
         - name: Word
           skipExample: true
+          vars:
+            PRONOUN: ""
+            TENSE: Infinitive
         - name: Explanation
           skipExample: true
           skipVoiceover: true
 
         - name: IndicativePresentYo
+          skipExample: true
           vars:
             PRONOUN: yo
             TENSE: Present Indicative
         - name: IndicativePresentTu
+          skipExample: true
           vars:
             PRONOUN: tú
             TENSE: Present Indicative
         - name: IndicativePresentEl
+          skipExample: true
           vars:
             PRONOUN: el/ella/usted
             TENSE: Present Indicative
         - name: IndicativePresentNosotros
+          skipExample: true
           vars:
             PRONOUN: nosotros
             TENSE: Present Indicative
         - name: IndicativePresentVosotros
+          skipExample: true
           vars:
             PRONOUN: vosotros
             TENSE: Present Indicative
         - name: IndicativePresentEllos
+          skipExample: true
           vars:
             PRONOUN: ellos/ellas/ustedes
             TENSE: Present Indicative
 
-        - name: IndicativePreteriteYo
-          vars:
-            PRONOUN: yo
-            TENSE: Preterite Indicative
-        - name: IndicativePreteriteTu
-          vars:
-            PRONOUN: tú
-            TENSE: Preterite Indicative
-        - name: IndicativePreteriteEl
-          vars:
-            PRONOUN: el/ella/usted
-            TENSE: Preterite Indicative
-        - name: IndicativePreteriteNosotros
-          vars:
-            PRONOUN: nosotros
-            TENSE: Preterite Indicative
-        - name: IndicativePreteriteVosotros
-          vars:
-            PRONOUN: vosotros
-            TENSE: Preterite Indicative
-        - name: IndicativePreteriteEllos
-          vars:
-            PRONOUN: ellos/ellas/ustedes
-            TENSE: Preterite Indicative
-
         - name: ImperativeAffirmativeTu
+          skipExample: true
           vars:
             PRONOUN: tú
             TENSE: Imperative Affirmative
-        - name: ImperativeAffirmativeEl
+        - name: ImperativeAffirmativeUsted
+          skipExample: true
           vars:
-            PRONOUN: el/ella/usted
-            TENSE: Imperative Affirmative
-        - name: ImperativeAffirmativeNosotros
-          vars:
-            PRONOUN: nosotros
-            TENSE: Imperative Affirmative
-        - name: ImperativeAffirmativeVosotros
-          vars:
-            PRONOUN: vosotros
-            TENSE: Imperative Affirmative
-        - name: ImperativeAffirmativeEllos
-          vars:
-            PRONOUN: ellos/ellas/ustedes
+            PRONOUN: usted
             TENSE: Imperative Affirmative
       templates:
         # For each template a distinct card template is created for each field specified in forFields
@@ -152,21 +126,9 @@ actions:
         #
         # Front layout is automatically wrapped with {{^$$FIELD$$}}{{/$$FIELD$$}}, so there is no need in
         # adding this manually
-        - name: "Infinitive"
-          forFields:
-            - Word
-          front: |
-            <div class="verb">[verbo infinitivo]</div>
-            {{Explanation}}
-            {{type::Word}}
-          back: |
-            <div class="verb">[verbo infinitivo]</div>
-            <div><b>{{Word}}</b>{{WordVoiceover}}</div> 
-            <div>{{Explanation}}</div>
-            <hr id=answer>
-            {{type::Word}}
         - name: "FillIn$$FIELD$$"
           forFields:
+            - Word
             - IndicativePresentYo
             - IndicativePresentTu
             - IndicativePresentEl
@@ -174,25 +136,13 @@ actions:
             - IndicativePresentVosotros
             - IndicativePresentEllos
             - ImperativeAffirmativeTu
-            - IndicativePreteriteYo
-            - IndicativePreteriteEl
+            - ImperativeAffirmativeUsted
           front: |
             <div><span class="verb">[verb, $$TENSE$$]</span></div><br>
             <i>{{text:Explanation}}</i><br>
-            {{^$$EXAMPLE$$}}
-              <div>$$PRONOUN$$ <b><span class='cloze'>[&#8230;]</span></b></div>
-            {{/$$EXAMPLE$$}}
-            {{#$$EXAMPLE$$}}
-              <br><br><i>Verbo significado:</i><br>
-              {{Explanation}}
-
-              <i>Completa la frase con verbo:</i><br>
-              <span class="mycloze">{{$$EXAMPLE$$}}</span>
-            {{/$$EXAMPLE$$}}
-
+            <div>$$PRONOUN$$ <b><span class='cloze'>[&#8230;]</span></b></div>
 
             {{type::$$FIELD$$}}
-
 
             <script>
             var clozes = document.querySelectorAll(".mycloze");
@@ -217,12 +167,6 @@ actions:
             <div><span class="verb">[verb, $$TENSE$$]</span></div>
             <i>{{text:Explanation}}</i><br>
             <div>$$PRONOUN$$ <b><span class='cloze'>{{text:$$FIELD$$}}</span></b>{{$$FIELD_VOICEOVER$$}}</div>
-
-            {{#$$EXAMPLE$$}}
-            <span class="mycloze">{{$$EXAMPLE$$}}</span>{{$$EXAMPLE_VOICEOVER$$}}
-            <br>
-            {{$$EXAMPLE_EXPLANATION$$}}
-            {{/$$EXAMPLE$$}}
 
             <hr id=answer>
             {{type::$$FIELD$$}}
