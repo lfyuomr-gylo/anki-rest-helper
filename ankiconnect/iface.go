@@ -1,5 +1,7 @@
 package ankiconnect
 
+import "io"
+
 type NoteID int64
 
 type CardID int64
@@ -32,4 +34,5 @@ type API interface {
 	ModelNames() ([]string, error)
 	CreateModel(params CreateModelParams) error
 	ChangeDeck(deckName string, noteIDs []CardID) error
+	StoreMediaFile(fileName string, fileData io.Reader, replaceExisting bool) error
 }

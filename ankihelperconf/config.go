@@ -32,9 +32,15 @@ type Anki struct {
 }
 
 type Actions struct {
+	UploadMedia       []AnkiUploadMedia
 	TTS               []AnkiTTS
 	NoteTypes         []AnkiNoteType
 	CardsOrganization []NotesOrganizationRule
+}
+
+type AnkiUploadMedia struct {
+	AnkiName string
+	FilePath string
 }
 
 type AnkiTTS struct {

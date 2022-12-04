@@ -3,6 +3,7 @@ package ankiconnectmock
 import (
 	"anki-rest-enhancer/ankiconnect"
 	"github.com/joomcode/errorx"
+	"io"
 )
 
 type API struct {
@@ -13,6 +14,7 @@ type API struct {
 	CreateModelFunc      func(params ankiconnect.CreateModelParams) error
 	FindCardsFunc        func(query string) ([]ankiconnect.CardID, error)
 	ChangeDeckFunc       func(deckName string, noteIDs []ankiconnect.CardID) error
+	StoreMediaFileFunc   func(fileName string, fileData io.Reader, replaceExisting bool) error
 }
 
 var _ ankiconnect.API = (*API)(nil)
@@ -68,4 +70,11 @@ func (api *API) ChangeDeck(deckName string, noteIDs []ankiconnect.CardID) error 
 		return behaviour(deckName, noteIDs)
 	}
 	panic(errorx.Panic(errorx.NotImplemented.New("Mock behaviour is not set for method ChangeDeck")))
+}
+
+func (api *API) StoreMediaFile(fileName string, fileData io.Reader, replaceExisting bool) error {
+	if behaviour := api.StoreMediaFileFunc; behaviour != nil {
+		return behaviour(fileName, fileData, replaceExisting)
+	}
+	panic(errorx.Panic(errorx.NotImplemented.New("Mock behaviour is not set for method StoreMediaFile")))
 }

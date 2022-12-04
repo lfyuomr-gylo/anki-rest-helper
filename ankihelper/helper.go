@@ -4,10 +4,12 @@ import (
 	"anki-rest-enhancer/ankiconnect"
 	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
+	"anki-rest-enhancer/util/iox"
 	"anki-rest-enhancer/util/stringx"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"log"
+	"os"
 )
 
 func NewHelper(
@@ -26,6 +28,9 @@ type Helper struct {
 }
 
 func (h Helper) Run(conf ankihelperconf.Actions) error {
+	if err := h.uploadMedia(conf.UploadMedia); err != nil {
+		return err
+	}
 	if err := h.ensureNoteTypes(conf.NoteTypes); err != nil {
 		return err
 	}
@@ -47,6 +52,26 @@ type ttsTask struct {
 type ttsTaskSource struct {
 	NoteFilter, TextField, AudioField string
 	TextPreprocessors                 []ankihelperconf.TextProcessor
+}
+
+func (h Helper) uploadMedia(media []ankihelperconf.AnkiUploadMedia) error {
+	for i, mediaUpload := range media {
+		if err := h.uploadSingleMedia(mediaUpload); err != nil {
+			return errorx.Decorate(err, "failed to upload media #%d", i)
+		}
+	}
+	return nil
+}
+
+func (h Helper) uploadSingleMedia(media ankihelperconf.AnkiUploadMedia) error {
+	f, err := os.Open(media.FilePath)
+	if err != nil {
+		return errorx.ExternalError.Wrap(err, "failed to open media file %q", media.FilePath)
+	}
+	defer iox.Close(f)
+
+	log.Printf("Uploading file %q to Anki under name %q...", media.FilePath, media.AnkiName)
+	return h.ankiConnect.StoreMediaFile(media.AnkiName, f, true)
 }
 
 func (h Helper) generateTTS(conf ankihelperconf.Actions) error {

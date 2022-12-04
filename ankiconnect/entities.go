@@ -128,3 +128,20 @@ type changeDeckParams struct {
 type changeDeckResult struct {
 	// nop
 }
+
+//goland:noinspection GoUnusedGlobalVariable
+var actionStoreMediaFile = declareAction("storeMediaFile", storeMediaFileParams{}, storeMediaFileResult(""))
+
+type storeMediaFileParams struct {
+	FileName string `json:"filename"`
+	// DeleteExisting specifies whether to overwrite existing file with the same name.
+	// NOTE: do not use omitempty for this field as AnkiConnect treats absence of this parameter as 'true'!
+	DeleteExisting bool `json:"deleteExisting"`
+
+	// oneof:
+	DataBase64 string `json:"data,omitempty"`
+	FilePath   string `json:"path,omitempty"`
+	URL        string `json:"url,omitempty"`
+}
+
+type storeMediaFileResult string

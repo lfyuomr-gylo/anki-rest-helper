@@ -40,7 +40,7 @@ func (c YAML) Parse(configDir string) (Config, error) {
 	}
 
 	{
-		Actions, err := c.Actions.Parse()
+		Actions, err := c.Actions.Parse(configDir)
 		if err != nil {
 			return Config{}, errorx.Decorate(err, "invalid Actions config")
 		}
@@ -73,6 +73,7 @@ func (c YAMLAzure) Parse(configDir string) (Azure, error) {
 	} else if keyPath := c.APIKeyFile; keyPath != "" {
 		if !filepath.IsAbs(keyPath) {
 			keyPath = filepath.Join(configDir, keyPath)
+			log.Printf("Resolve relative path to Azure key file against configuration directory: %s", keyPath)
 		}
 
 		log.Printf("Loading Azure API Key from %s", keyPath)
@@ -207,13 +208,22 @@ func (c YAMLAnki) Parse() (Anki, error) {
 }
 
 type YAMLActions struct {
+	UploadMedia       []YAMLUploadMedia       `yaml:"uploadMedia"`
 	TTS               []YAMLAnkiTTS           `yaml:"tts"`
 	NoteTypes         []YAMLAnkiNoteType      `yaml:"noteTypes"`
 	CardsOrganization []YAMLNotesOrganization `yaml:"cardsOrganization"`
 }
 
-func (e YAMLActions) Parse() (Actions, error) {
+func (e YAMLActions) Parse(configDir string) (Actions, error) {
 	var actions Actions
+
+	for i, mediaUpload := range e.UploadMedia {
+		parsed, err := mediaUpload.Parse(configDir)
+		if err != nil {
+			return Actions{}, errorx.Decorate(err, "invalid uploadMedia #%d", i)
+		}
+		actions.UploadMedia = append(actions.UploadMedia, parsed)
+	}
 
 	for i, tts := range e.TTS {
 		parsed, err := tts.Parse()
@@ -240,6 +250,29 @@ func (e YAMLActions) Parse() (Actions, error) {
 	}
 
 	return actions, nil
+}
+
+type YAMLUploadMedia struct {
+	AnkiName string `yaml:"ankiName"`
+	Path     string `yaml:"path"`
+}
+
+func (um YAMLUploadMedia) Parse(configDir string) (AnkiUploadMedia, error) {
+	name, path := um.AnkiName, um.Path
+	if len(name) == 0 {
+		return AnkiUploadMedia{}, errorx.IllegalArgument.New("ankiName should be specified in media upload")
+	}
+	if len(path) == 0 {
+		return AnkiUploadMedia{}, errorx.IllegalArgument.New("path should be specified in media upload")
+	}
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(configDir, path)
+		log.Printf("Resolve media upload file path against configuration directory: %s", path)
+	}
+	return AnkiUploadMedia{
+		AnkiName: name,
+		FilePath: path,
+	}, nil
 }
 
 type YAMLAnkiTTS struct {

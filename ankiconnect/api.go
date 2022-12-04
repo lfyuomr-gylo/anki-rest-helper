@@ -2,6 +2,7 @@ package ankiconnect
 
 import (
 	"anki-rest-enhancer/ankihelperconf"
+	"anki-rest-enhancer/util/base64x"
 	"anki-rest-enhancer/util/httputil"
 	"bytes"
 	"crypto/md5"
@@ -226,4 +227,19 @@ func (api api) doReqWithBody(reqBody []byte) (*http.Response, error) {
 
 	resp.Body = io.NopCloser(bytes.NewReader(respBody))
 	return resp, nil
+}
+
+func (api api) StoreMediaFile(fileName string, fileData io.Reader, deleteExisting bool) error {
+	dataBase64, err := base64x.ReadAllEncodeToString(base64.StdEncoding, fileData)
+	if err != nil {
+		return errorx.Decorate(err, "failed to encode file content to base64")
+	}
+
+	params := storeMediaFileParams{
+		FileName:       fileName,
+		DeleteExisting: deleteExisting,
+		DataBase64:     dataBase64,
+	}
+	_, err = api.doReq(params, 5)
+	return err
 }

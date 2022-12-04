@@ -9,6 +9,7 @@ It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://g
 - automatic text-to-speech generation using Microsoft Azure transcription for multiple note fields.
 - automatic cards organization: put your cards in the appropriate decks by defining organization rules.
 - note type generation with meta-templating of card templates. It's useful for verb conjugation learning.
+- static media files upload 
 
 # How to use it
 
