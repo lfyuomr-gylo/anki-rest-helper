@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	templateOpen  = "[["
-	templateClose = "]]"
+	templateOpen  = "$$"
+	templateClose = "$$"
 )
 
 type YAML struct {
@@ -478,7 +478,7 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 		filter.WriteString(fields[0])
 		filter.WriteRune(':')
 		for _, field := range fields[1:] {
-			filter.WriteRune(' ')
+			filter.WriteString(" or ")
 			filter.WriteString(field)
 			filter.WriteRune(':')
 		}

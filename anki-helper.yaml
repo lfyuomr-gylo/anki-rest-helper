@@ -242,7 +242,7 @@ actions:
       exec:
         command: ./conjugate-spanish-verb.sh
         args:
-          - "[[ .Note.Fields.Word ]]"
+          - "$$.Note.Fields.Word$$"
       minPauseBetweenExecutions: 1200ms
   cardsOrganization:
     - filter: -note:SpanishVerb*
