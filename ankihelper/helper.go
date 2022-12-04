@@ -4,12 +4,16 @@ import (
 	"anki-rest-enhancer/ankiconnect"
 	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
+	"anki-rest-enhancer/ratelimit"
 	"anki-rest-enhancer/util/iox"
 	"anki-rest-enhancer/util/stringx"
+	"encoding/json"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 func NewHelper(
@@ -32,6 +36,9 @@ func (h Helper) Run(conf ankihelperconf.Actions) error {
 		return err
 	}
 	if err := h.ensureNoteTypes(conf.NoteTypes); err != nil {
+		return err
+	}
+	if err := h.populateNotes(conf.NotesPopulation); err != nil {
 		return err
 	}
 	if err := h.generateTTS(conf); err != nil {
@@ -359,4 +366,104 @@ func (h Helper) applyOrganizationRule(rule ankihelperconf.NotesOrganizationRule)
 	}
 	log.Printf("Successfully moved %d cards to deck %s", len(cardIDs), targetDeck)
 	return nil
+}
+
+func (h Helper) populateNotes(rules []ankihelperconf.NotesPopulationRule) error {
+	log.Println("Populate notes with auto-generated content...")
+
+	for i, rule := range rules {
+		log.Printf("Running note population rule #%d...", i)
+		if err := h.applyPopulationRule(rule); err != nil {
+			return errorx.Decorate(err, "failed to execute note population rule #%d", i)
+		}
+	}
+
+	log.Println("Successfully completed notes population with auto-generated content!")
+	return nil
+}
+
+func (h Helper) applyPopulationRule(rule ankihelperconf.NotesPopulationRule) error {
+	// 1. find notes to populate
+	noteIDs, err := h.ankiConnect.FindNotes(rule.NoteFilter)
+	if err != nil {
+		return err
+	}
+	notes, err := h.ankiConnect.NotesInfo(noteIDs)
+	if err != nil {
+		return err
+	}
+
+	// 2. for each note, run population
+	throttler := ratelimit.NewThrottler(rule.MinPauseBetweenExecutions)
+	idx := 0
+	for noteID, note := range notes {
+		idx++
+		throttler.Throttle()
+
+		fieldUpdate, err := h.execNotePopulationForNote(rule, note, idx, len(notes))
+		if err != nil {
+			log.Printf("Skip failed note %d population, error: %s", noteID, err)
+			continue
+		}
+		if err := h.ankiConnect.UpdateNoteFields(noteID, fieldUpdate); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (h Helper) execNotePopulationForNote(
+	rule ankihelperconf.NotesPopulationRule,
+	note ankiconnect.NoteInfo,
+	noteIdx, totalNotes int,
+) (map[string]ankiconnect.FieldUpdate, error) {
+	templateContext := map[string]any{
+		"Note": map[string]any{
+			"Fields": note.Fields,
+		},
+	}
+
+	args := make([]string, len(rule.Exec.Args))
+	for i, arg := range rule.Exec.Args {
+		switch {
+		case arg.PlainString != nil:
+			args[i] = *arg.PlainString
+		case arg.Template != nil:
+			var argBuilder strings.Builder
+			if err := arg.Template.Execute(&argBuilder, templateContext); err != nil {
+				return nil, errorx.IllegalFormat.Wrap(err, "failed to substitute template in argument #%d", i)
+			}
+			args[i] = argBuilder.String()
+		}
+	}
+
+	cmd := exec.Command(rule.Exec.Command, args...)
+	log.Printf("Executing note population command [%d/%d]: %s", noteIdx, totalNotes, cmd)
+	cmdOut, err := cmd.Output()
+	if err != nil {
+		return nil, errorx.ExternalError.Wrap(err, "Note population command failed")
+	}
+
+	var commandOutParsed map[string]string
+	if err := json.Unmarshal(cmdOut, &commandOutParsed); err != nil {
+		return nil, errorx.ExternalError.Wrap(err, "Note population command's stdout is malformed")
+	}
+
+	fieldValues := make(map[string]ankiconnect.FieldUpdate, len(commandOutParsed))
+	missingFields := rule.ProducedFields.Clone()
+	for field, value := range commandOutParsed {
+		if !rule.ProducedFields.Contains(field) {
+			log.Printf("WARNING: note population produced field unexpected field %q for note %d. Ignore it.", field, note.ID)
+			continue
+		}
+		missingFields.Delete(field)
+		fieldValues[field] = ankiconnect.FieldUpdate{Value: value}
+	}
+	if missingFields.Len() > 0 {
+		missing := strings.Join(missingFields.AsSlice(), ", ")
+		log.Printf("WARNING: note population for note %d is missing the following expected fields: %s", note.ID, missing)
+	}
+
+	return fieldValues, nil
 }

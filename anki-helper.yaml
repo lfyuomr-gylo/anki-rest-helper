@@ -100,7 +100,7 @@ actions:
         - name: IndicativePresentEl
           skipExample: true
           vars:
-            PRONOUN: el/ella/usted
+            PRONOUN: él/ella/usted
             TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentNosotros
           skipExample: true
@@ -224,6 +224,26 @@ actions:
          color: blue;
         }
 
+  notesPopulation:
+    - producedFields:
+        - IndicativePresentYo
+        - IndicativePresentTu
+        - IndicativePresentEl
+        - IndicativePresentNosotros
+        - IndicativePresentVosotros
+        - IndicativePresentEllos
+        - ImperativeAffirmativeTu
+        - ImperativeAffirmativeUsted
+      # Execute specified command with specified arguments
+      # and read values of note fields from its stdout.
+      # Command should print field values in JSON format.
+      #
+      # Note fields not listed in 'producedFields' will be ignored.
+      exec:
+        command: ./conjugate-spanish-verb.sh
+        args:
+          - "[[ .Note.Fields.Word ]]"
+      minPauseBetweenExecutions: 1200ms
   cardsOrganization:
     - filter: -note:SpanishVerb*
       targetDeck: Spanish::Other

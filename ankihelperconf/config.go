@@ -1,8 +1,10 @@
 package ankihelperconf
 
 import (
+	"anki-rest-enhancer/util/lang/set"
 	"net/url"
 	"regexp"
+	"text/template"
 	"time"
 )
 
@@ -36,6 +38,7 @@ type Actions struct {
 	TTS               []AnkiTTS
 	NoteTypes         []AnkiNoteType
 	CardsOrganization []NotesOrganizationRule
+	NotesPopulation   []NotesPopulationRule
 }
 
 type AnkiUploadMedia struct {
@@ -74,6 +77,25 @@ type AnkiCardTemplate struct {
 type NotesOrganizationRule struct {
 	NotesFilter    string
 	TargetDeckName string
+}
+
+type NotesPopulationRule struct {
+	NoteFilter                string
+	ProducedFields            set.Set[string]
+	MinPauseBetweenExecutions time.Duration
+
+	Exec NotesPopulationExec
+}
+
+type NotesPopulationExec struct {
+	Command string
+	Args    []NotesPopulationExecArg
+}
+
+type NotesPopulationExecArg struct {
+	// oneof
+	PlainString *string
+	Template    *template.Template
 }
 
 type TextProcessor interface {

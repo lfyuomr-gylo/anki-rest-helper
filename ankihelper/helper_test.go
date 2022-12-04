@@ -187,10 +187,13 @@ func (s *EnhancerSuite) TestTTSGeneration_Simple() {
 	s.AnkiMock.NotesInfoFunc = func(noteIDs []ankiconnect.NoteID) (map[ankiconnect.NoteID]ankiconnect.NoteInfo, error) {
 		s.Require().Equal([]ankiconnect.NoteID{noteID}, noteIDs)
 		return map[ankiconnect.NoteID]ankiconnect.NoteInfo{
-			noteID: {Fields: map[string]string{
-				textField:  text,
-				audioField: "",
-			}},
+			noteID: {
+				ID: noteID,
+				Fields: map[string]string{
+					textField:  text,
+					audioField: "",
+				},
+			},
 		}, nil
 	}
 	s.TTSMock.TextToSpeechFunc = func(texts map[string]struct{}) map[string]azuretts.TextToSpeechResult {
@@ -245,8 +248,8 @@ func (s *EnhancerSuite) TestTTSGeneration_SingleErrorIsIgnored() {
 	s.AnkiMock.NotesInfoFunc = func(noteIDs []ankiconnect.NoteID) (map[ankiconnect.NoteID]ankiconnect.NoteInfo, error) {
 		s.Require().ElementsMatch([]ankiconnect.NoteID{noteID1, noteID2}, noteIDs)
 		return map[ankiconnect.NoteID]ankiconnect.NoteInfo{
-			noteID1: {Fields: map[string]string{textField: text1, audioField: ""}},
-			noteID2: {Fields: map[string]string{textField: text2, audioField: ""}},
+			noteID1: {ID: noteID1, Fields: map[string]string{textField: text1, audioField: ""}},
+			noteID2: {ID: noteID2, Fields: map[string]string{textField: text2, audioField: ""}},
 		}, nil
 	}
 	s.TTSMock.TextToSpeechFunc = func(texts map[string]struct{}) map[string]azuretts.TextToSpeechResult {

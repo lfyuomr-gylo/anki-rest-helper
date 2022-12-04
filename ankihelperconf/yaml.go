@@ -1,17 +1,26 @@
 package ankihelperconf
 
 import (
+	"anki-rest-enhancer/util/lang"
+	"anki-rest-enhancer/util/lang/set"
 	"anki-rest-enhancer/util/stringx"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"io"
 	"log"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 	"time"
+)
+
+const (
+	templateOpen  = "[["
+	templateClose = "]]"
 )
 
 type YAML struct {
@@ -108,7 +117,7 @@ func (c YAMLAzure) Parse(configDir string) (Azure, error) {
 		conf.Voice = voice
 	}
 
-	if lang := c.Language; lang == "" {
+	if language := c.Language; language == "" {
 		log.Println("Text-to-speech language is not explicitly specified in the config. Trying to infer from voice name...")
 		langLocaleVoice := strings.SplitN(c.Voice, "-", 3)
 		if len(langLocaleVoice) != 3 {
@@ -212,6 +221,7 @@ type YAMLActions struct {
 	TTS               []YAMLAnkiTTS           `yaml:"tts"`
 	NoteTypes         []YAMLAnkiNoteType      `yaml:"noteTypes"`
 	CardsOrganization []YAMLNotesOrganization `yaml:"cardsOrganization"`
+	NotesPopulation   []YAMLNotesPopulation   `yaml:"notesPopulation"`
 }
 
 func (e YAMLActions) Parse(configDir string) (Actions, error) {
@@ -247,6 +257,14 @@ func (e YAMLActions) Parse(configDir string) (Actions, error) {
 			return Actions{}, errorx.Decorate(err, "invalid notes organization rule #%d", i)
 		}
 		actions.CardsOrganization = append(actions.CardsOrganization, parsed)
+	}
+
+	for i, populationRule := range e.NotesPopulation {
+		parsed, err := populationRule.Parse(configDir)
+		if err != nil {
+			return Actions{}, errorx.Decorate(err, "failed to parse note population #%d", i)
+		}
+		actions.NotesPopulation = append(actions.NotesPopulation, parsed)
 	}
 
 	return actions, nil
@@ -366,8 +384,8 @@ func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
 	}
 
 	templates := make([]AnkiCardTemplate, len(t.Templates))
-	for i, template := range t.Templates {
-		parsed, err := template.Parse(fieldsByName)
+	for i, tmpl := range t.Templates {
+		parsed, err := tmpl.Parse(fieldsByName)
 		if err != nil {
 			return AnkiNoteType{}, errorx.Decorate(err, "invalid card template #%d", i)
 		}
@@ -438,6 +456,94 @@ func (o YAMLNotesOrganization) Parse() (NotesOrganizationRule, error) {
 	return NotesOrganizationRule{
 		NotesFilter:    filter,
 		TargetDeckName: targetDeck,
+	}, nil
+}
+
+type YAMLNotesPopulation struct {
+	NoteFilter                string   `yaml:"noteFilter"`
+	ProducedFields            []string `yaml:"producedFields"`
+	MinPauseBetweenExecutions string   `yaml:"minPauseBetweenExecutions"`
+
+	Exec YAMLNotesPopulationExec `yaml:"exec"`
+}
+
+func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, error) {
+	fields := np.ProducedFields
+	if len(fields) == 0 {
+		return NotesPopulationRule{}, errorx.IllegalArgument.New("note population should produce at least one field")
+	}
+
+	if np.NoteFilter == "" {
+		var filter strings.Builder
+		filter.WriteString(fields[0])
+		filter.WriteRune(':')
+		for _, field := range fields[1:] {
+			filter.WriteRune(' ')
+			filter.WriteString(field)
+			filter.WriteRune(':')
+		}
+		np.NoteFilter = filter.String()
+		log.Printf("No note filter specified for note population rule, so generate default filter: %q", np.NoteFilter)
+	}
+
+	exec, err := np.Exec.Parse(configDir)
+	if err != nil {
+		return NotesPopulationRule{}, err
+	}
+
+	minPauseBetweenExecutions := time.Duration(math.MaxInt64)
+	if raw := np.MinPauseBetweenExecutions; raw != "" {
+		parsed, err := time.ParseDuration(np.MinPauseBetweenExecutions)
+		if err != nil {
+			return NotesPopulationRule{}, errorx.IllegalFormat.Wrap(err, "malformed minPauseBetweenExecutions")
+		}
+		minPauseBetweenExecutions = parsed
+	}
+
+	return NotesPopulationRule{
+		NoteFilter:                np.NoteFilter,
+		ProducedFields:            set.FromSlice(fields...),
+		MinPauseBetweenExecutions: minPauseBetweenExecutions,
+		Exec:                      exec,
+	}, nil
+}
+
+type YAMLNotesPopulationExec struct {
+	Command string   `yaml:"command"`
+	Args    []string `yaml:"args"`
+}
+
+func (e YAMLNotesPopulationExec) Parse(configDir string) (NotesPopulationExec, error) {
+	if stringx.IsBlank(e.Command) {
+		return NotesPopulationExec{}, errorx.IllegalArgument.New("exec command must be specified")
+	}
+	if strings.HasPrefix(e.Command, "./") || strings.HasPrefix(e.Command, "../") {
+		e.Command = filepath.Join(configDir, e.Command)
+		log.Printf("Resolve relative exec command path in note population rule against configuration directory: %s", e.Command)
+	}
+
+	var args []NotesPopulationExecArg
+	for i, arg := range e.Args {
+		if strings.Contains(arg, templateOpen) && strings.Contains(arg, templateClose) {
+			parsed, err := template.New(fmt.Sprintf("arg#%d", i)).
+				Delims(templateOpen, templateClose).
+				Parse(arg)
+			if err != nil {
+				return NotesPopulationExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse exec argument #d", i)
+			}
+			args = append(args, NotesPopulationExecArg{
+				Template: parsed,
+			})
+		} else {
+			args = append(args, NotesPopulationExecArg{
+				PlainString: lang.New(arg),
+			})
+		}
+	}
+
+	return NotesPopulationExec{
+		Command: e.Command,
+		Args:    args,
 	}, nil
 }
 
