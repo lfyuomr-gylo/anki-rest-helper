@@ -14,6 +14,15 @@ anki:
   connectUrl: 'http://localhost:8766'
   # logRequests: true
 actions:
+  uploadMedia:
+    # Files prefixed with underscore won't be automatically deleted by Anki when unused.
+    # Relative file paths are resolved against the directory where configuration file is placed.
+    - ankiName: _spanish-infinitive.png
+      path: media/spanish-tenses/spanish-infinitive.png
+    - ankiName: _spanish-tense-imperative.jpeg
+      path: media/spanish-tenses/spanish-tense-imperative.jpeg
+    - ankiName: _spanish-tense-present.jpeg
+      path: media/spanish-tenses/spanish-tense-present.jpeg
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
@@ -73,7 +82,7 @@ actions:
           skipExample: true
           vars:
             PRONOUN: ""
-            TENSE: Infinitive
+            TENSE: _spanish-infinitive.png
         - name: Explanation
           skipExample: true
           skipVoiceover: true
@@ -82,43 +91,43 @@ actions:
           skipExample: true
           vars:
             PRONOUN: yo
-            TENSE: Present Indicative
+            TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentTu
           skipExample: true
           vars:
             PRONOUN: tú
-            TENSE: Present Indicative
+            TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentEl
           skipExample: true
           vars:
             PRONOUN: el/ella/usted
-            TENSE: Present Indicative
+            TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentNosotros
           skipExample: true
           vars:
             PRONOUN: nosotros
-            TENSE: Present Indicative
+            TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentVosotros
           skipExample: true
           vars:
             PRONOUN: vosotros
-            TENSE: Present Indicative
+            TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentEllos
           skipExample: true
           vars:
             PRONOUN: ellos/ellas/ustedes
-            TENSE: Present Indicative
+            TENSE: _spanish-tense-present.jpeg
 
         - name: ImperativeAffirmativeTu
           skipExample: true
           vars:
             PRONOUN: tú
-            TENSE: Imperative Affirmative
+            TENSE: _spanish-tense-imperative.jpeg
         - name: ImperativeAffirmativeUsted
           skipExample: true
           vars:
             PRONOUN: usted
-            TENSE: Imperative Affirmative
+            TENSE: _spanish-tense-imperative.jpeg
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -138,7 +147,7 @@ actions:
             - ImperativeAffirmativeTu
             - ImperativeAffirmativeUsted
           front: |
-            <div><span class="verb">[verb, $$TENSE$$]</span></div><br>
+            <img src="$$TENSE$$"><br><br>
             <i>{{text:Explanation}}</i><br>
             <div>$$PRONOUN$$ <b><span class='cloze'>[&#8230;]</span></b></div>
 
@@ -164,7 +173,7 @@ actions:
             });
             </script>
           back: |
-            <div><span class="verb">[verb, $$TENSE$$]</span></div>
+            <img src="$$TENSE$$"><br><br>
             <i>{{text:Explanation}}</i><br>
             <div>$$PRONOUN$$ <b><span class='cloze'>{{text:$$FIELD$$}}</span></b>{{$$FIELD_VOICEOVER$$}}</div>
 

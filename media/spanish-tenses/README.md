@@ -1,0 +1,2 @@
+- Infinitive image is taken from https://www.lawlessspanish.com/grammar/verbs/infinitive/
+- Tenses timeline image is taken from https://www.tellmeinspanish.com/spanish-tenses/ 
