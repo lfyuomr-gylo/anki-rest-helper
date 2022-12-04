@@ -462,6 +462,7 @@ func (o YAMLNotesOrganization) Parse() (NotesOrganizationRule, error) {
 type YAMLNotesPopulation struct {
 	NoteFilter                string   `yaml:"noteFilter"`
 	ProducedFields            []string `yaml:"producedFields"`
+	OverwriteExisting         bool     `yaml:"overwriteExisting"`
 	MinPauseBetweenExecutions string   `yaml:"minPauseBetweenExecutions"`
 
 	Exec YAMLNotesPopulationExec `yaml:"exec"`
@@ -503,6 +504,7 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 	return NotesPopulationRule{
 		NoteFilter:                np.NoteFilter,
 		ProducedFields:            set.FromSlice(fields...),
+		OverwriteExisting:         np.OverwriteExisting,
 		MinPauseBetweenExecutions: minPauseBetweenExecutions,
 		Exec:                      exec,
 	}, nil

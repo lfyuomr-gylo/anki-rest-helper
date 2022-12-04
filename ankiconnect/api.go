@@ -85,6 +85,10 @@ func (api api) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
 }
 
 func (api api) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
 	params := updateNoteFieldsParams{Note: updateNoteFieldsNote{
 		ID:     noteID,
 		Fields: make(map[string]string, len(fields)),

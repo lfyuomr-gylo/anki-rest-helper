@@ -458,7 +458,10 @@ func (h Helper) execNotePopulationForNote(
 			continue
 		}
 		missingFields.Delete(field)
-		fieldValues[field] = ankiconnect.FieldUpdate{Value: value}
+
+		if rule.OverwriteExisting || note.Fields[field] == "" {
+			fieldValues[field] = ankiconnect.FieldUpdate{Value: value}
+		}
 	}
 	if missingFields.Len() > 0 {
 		missing := strings.Join(missingFields.AsSlice(), ", ")

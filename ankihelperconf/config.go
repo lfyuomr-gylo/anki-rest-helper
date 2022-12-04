@@ -82,6 +82,7 @@ type NotesOrganizationRule struct {
 type NotesPopulationRule struct {
 	NoteFilter                string
 	ProducedFields            set.Set[string]
+	OverwriteExisting         bool
 	MinPauseBetweenExecutions time.Duration
 
 	Exec NotesPopulationExec

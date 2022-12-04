@@ -244,6 +244,7 @@ actions:
         args:
           - "$$.Note.Fields.Word$$"
       minPauseBetweenExecutions: 1200ms
+      overwriteExisting: false
   cardsOrganization:
     - filter: -note:SpanishVerb*
       targetDeck: Spanish::Other
