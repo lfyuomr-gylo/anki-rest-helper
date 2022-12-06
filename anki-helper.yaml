@@ -128,6 +128,10 @@ actions:
           vars:
             PRONOUN: usted
             TENSE: _spanish-tense-imperative.jpeg
+
+        - name: AutoConjugationIgnore
+          skipExample: true
+          skipVoiceover: true
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -234,6 +238,8 @@ actions:
         - IndicativePresentEllos
         - ImperativeAffirmativeTu
         - ImperativeAffirmativeUsted
+      # Note filter will be automatically adjusted to skip notes that have all of the produced fields
+      noteFilter: "AutoConjugationIgnore:"
       # Execute specified command with specified arguments
       # and read values of note fields from its stdout.
       # Command should print field values in JSON format.

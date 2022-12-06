@@ -8,7 +8,6 @@ import (
 	"github.com/joomcode/errorx"
 	"io"
 	"log"
-	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -460,10 +459,11 @@ func (o YAMLNotesOrganization) Parse() (NotesOrganizationRule, error) {
 }
 
 type YAMLNotesPopulation struct {
-	NoteFilter                string   `yaml:"noteFilter"`
-	ProducedFields            []string `yaml:"producedFields"`
-	OverwriteExisting         bool     `yaml:"overwriteExisting"`
-	MinPauseBetweenExecutions string   `yaml:"minPauseBetweenExecutions"`
+	NoteFilter                    string   `yaml:"noteFilter"`
+	ProducedFields                []string `yaml:"producedFields"`
+	OverwriteExisting             bool     `yaml:"overwriteExisting"`
+	MinPauseBetweenExecutions     string   `yaml:"minPauseBetweenExecutions"`
+	DisableAutoFilterOptimization *bool    `yaml:"disableAutoFilterOptimization"`
 
 	Exec YAMLNotesPopulationExec `yaml:"exec"`
 }
@@ -474,17 +474,26 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 		return NotesPopulationRule{}, errorx.IllegalArgument.New("note population should produce at least one field")
 	}
 
-	if np.NoteFilter == "" {
-		var filter strings.Builder
-		filter.WriteString(fields[0])
-		filter.WriteRune(':')
+	noteFilter := np.NoteFilter
+	if np.shouldOptimizeFilter() {
+		// add filter to skip notes that have all the produced fields already set
+		var fieldsFilterBuilder strings.Builder
+		fieldsFilterBuilder.WriteString(fields[0])
+		fieldsFilterBuilder.WriteRune(':')
 		for _, field := range fields[1:] {
-			filter.WriteString(" or ")
-			filter.WriteString(field)
-			filter.WriteRune(':')
+			fieldsFilterBuilder.WriteString(" or ")
+			fieldsFilterBuilder.WriteString(field)
+			fieldsFilterBuilder.WriteRune(':')
 		}
-		np.NoteFilter = filter.String()
-		log.Printf("No note filter specified for note population rule, so generate default filter: %q", np.NoteFilter)
+		fieldsFilter := fieldsFilterBuilder.String()
+
+		if noteFilter == "" {
+			noteFilter = fieldsFilter
+			log.Printf("No note filter specified for note population rule, generate default filter: %s", noteFilter)
+		} else {
+			noteFilter = fmt.Sprintf("%s (%s)", noteFilter, fieldsFilter)
+			log.Printf("Automatically adjust note filter in population rule: %s", noteFilter)
+		}
 	}
 
 	exec, err := np.Exec.Parse(configDir)
@@ -492,7 +501,7 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 		return NotesPopulationRule{}, err
 	}
 
-	minPauseBetweenExecutions := time.Duration(math.MaxInt64)
+	var minPauseBetweenExecutions time.Duration
 	if raw := np.MinPauseBetweenExecutions; raw != "" {
 		parsed, err := time.ParseDuration(np.MinPauseBetweenExecutions)
 		if err != nil {
@@ -502,12 +511,27 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 	}
 
 	return NotesPopulationRule{
-		NoteFilter:                np.NoteFilter,
+		NoteFilter:                noteFilter,
 		ProducedFields:            set.FromSlice(fields...),
-		OverwriteExisting:         np.OverwriteExisting,
 		MinPauseBetweenExecutions: minPauseBetweenExecutions,
+		OverwriteExisting:         np.OverwriteExisting,
 		Exec:                      exec,
 	}, nil
+}
+
+func (np YAMLNotesPopulation) shouldOptimizeFilter() bool {
+	switch {
+	case np.NoteFilter == "":
+		return true
+	case np.DisableAutoFilterOptimization == nil:
+		if np.OverwriteExisting {
+			log.Printf("Disable automatic note filter optimization in population rule because overwriteExisting is enabled and filter is specified: %s", np.NoteFilter)
+			return false
+		}
+		return true
+	default:
+		return *np.DisableAutoFilterOptimization
+	}
 }
 
 type YAMLNotesPopulationExec struct {
