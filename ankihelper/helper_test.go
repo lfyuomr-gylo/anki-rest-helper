@@ -61,7 +61,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_AlreadyExists() {
 	s.Require().Empty(createModelCalls, "Helper should not attempt to recreate already existing note types")
 }
 
-func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() {
+func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithVoiceover() {
 	// setup:
 	s.AnkiMock.ModelNamesFunc = func() ([]string, error) {
 		return []string{"existing model"}, nil
@@ -84,19 +84,19 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() 
 		Templates: []ankihelperconf.AnkiCardTemplate{{
 			Name:      "WordTemplate",
 			ForFields: []ankihelperconf.AnkiNoteField{fieldName},
-			Front:     "$TITLE$: {{ $FIELD$ }}\nExample: {{ $EXAMPLE$ }}\nExplanation: {{ $EXAMPLE_EXPLANATION$ }}$MY_EMPTY_FIELD$",
-			Back:      "{{ $FIELD_VOICEOVER$ }} {{ $EXAMPLE_VOICEOVER$ }}",
+			Front:     "$TITLE$: {{ $FIELD$ }}$MY_EMPTY_FIELD$",
+			Back:      "{{ $FIELD_VOICEOVER$ }}",
 		}},
 	}}}
 	expectedModel := ankiconnect.CreateModelParams{
 		ModelName:     "My Note Type",
-		InOrderFields: []string{"word", "wordExample", "wordExampleExplanation", "wordVoiceover", "wordExampleVoiceover"},
+		InOrderFields: []string{"word", "wordVoiceover"},
 		CSS:           ".foo { font-size: large; }",
 		IsCloze:       false,
 		CardTemplates: []ankiconnect.CreateModelCardTemplate{{
 			Name:  "WordTemplate",
-			Front: "{{#word}}\nWord: {{ word }}\nExample: {{ wordExample }}\nExplanation: {{ wordExampleExplanation }}\n{{/word}}",
-			Back:  "{{ wordVoiceover }} {{ wordExampleVoiceover }}",
+			Front: "{{#word}}\nWord: {{ word }}\n{{/word}}",
+			Back:  "{{ wordVoiceover }}",
 		}},
 	}
 
@@ -109,7 +109,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithExampleAndVoiceover() 
 	s.Require().Equal(expectedModel, createModelCalls[0])
 }
 
-func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoExampleOrVoiceover() {
+func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoVoiceover() {
 	// setup:
 	s.AnkiMock.ModelNamesFunc = func() ([]string, error) {
 		return []string{"existing model"}, nil
@@ -123,7 +123,6 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoExampleOrVoiceover()
 	// given:
 	fieldComment := ankihelperconf.AnkiNoteField{
 		Name:          "comment",
-		SkipExample:   true,
 		SkipVoiceover: true,
 	}
 	const css = ".foo { font-size: large; }"

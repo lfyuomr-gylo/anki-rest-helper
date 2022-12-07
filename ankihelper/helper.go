@@ -167,14 +167,6 @@ func (h Helper) getTTSTaskSources(conf ankihelperconf.Actions) ([]ttsTaskSource,
 						TextPreprocessors: tts.TextPreprocessors,
 					})
 				}
-				if names.Example != "" && names.ExampleVoiceover != "" {
-					taskSources = append(taskSources, ttsTaskSource{
-						NoteFilter:        fmt.Sprintf(`"note:%s" "%s:_*" "%s:"`, typeName, names.Example, names.ExampleVoiceover),
-						TextField:         names.Example,
-						AudioField:        names.ExampleVoiceover,
-						TextPreprocessors: tts.TextPreprocessors,
-					})
-				}
 			}
 		default:
 			panic(errorx.Panic(errorx.IllegalState.New("unexpected tts: %+v", tts)))
@@ -257,8 +249,8 @@ func (h Helper) createNoteType(conf ankihelperconf.AnkiNoteType) error {
 	var voiceoverFields []string
 	for _, field := range conf.Fields {
 		names := h.fieldNames(field)
-		fieldNames = stringx.AppendNonEmpty(fieldNames, names.Field, names.Example, names.ExampleExplanation)
-		voiceoverFields = stringx.AppendNonEmpty(voiceoverFields, names.FieldVoiceover, names.ExampleVoiceover)
+		fieldNames = stringx.AppendNonEmpty(fieldNames, names.Field)
+		voiceoverFields = stringx.AppendNonEmpty(voiceoverFields, names.FieldVoiceover)
 	}
 	fieldNames = append(fieldNames, voiceoverFields...)
 
@@ -267,11 +259,8 @@ func (h Helper) createNoteType(conf ankihelperconf.AnkiNoteType) error {
 		for _, field := range template.ForFields {
 			names := h.fieldNames(field)
 			substitutions := stringx.RemoveEmptyValuesInPlace(map[string]string{
-				"FIELD":               names.Field,
-				"FIELD_VOICEOVER":     names.FieldVoiceover,
-				"EXAMPLE":             names.Example,
-				"EXAMPLE_VOICEOVER":   names.ExampleVoiceover,
-				"EXAMPLE_EXPLANATION": names.ExampleExplanation,
+				"FIELD":           names.Field,
+				"FIELD_VOICEOVER": names.FieldVoiceover,
 			})
 			for name, val := range field.Vars {
 				if _, ok := substitutions[name]; ok {
@@ -316,24 +305,15 @@ func (h Helper) createNoteType(conf ankihelperconf.AnkiNoteType) error {
 }
 
 type FieldNames struct {
-	Field, FieldVoiceover, Example, ExampleVoiceover, ExampleExplanation string
+	Field, FieldVoiceover string
 }
 
 func (h Helper) fieldNames(field ankihelperconf.AnkiNoteField) FieldNames {
 	const voiceoverSuffix = "Voiceover"
-	const exampleSuffix = "Example"
-	const explanationSuffix = "Explanation"
 
 	names := FieldNames{Field: field.Name}
 	if !field.SkipVoiceover {
 		names.FieldVoiceover = field.Name + voiceoverSuffix
-	}
-	if !field.SkipExample {
-		names.Example = field.Name + exampleSuffix
-		names.ExampleExplanation = names.Example + explanationSuffix
-		if !field.SkipVoiceover {
-			names.ExampleVoiceover = names.Example + voiceoverSuffix
-		}
 	}
 
 	return names

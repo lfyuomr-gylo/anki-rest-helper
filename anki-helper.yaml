@@ -77,65 +77,53 @@ actions:
         # For each field below, the following fields are created:
         #   Field,
         #   FieldVoiceover (unless skipVoiceover: true)
-        #   FieldExample, FieldExampleVoiceover, FieldExampleExplanation (unless skipExample: true)
         - name: Word
-          skipExample: true
           vars:
             PRONOUN: ""
             TENSE: _spanish-infinitive.png
         - name: Explanation
-          skipExample: true
           skipVoiceover: true
 
         - name: IndicativePresentYo
-          skipExample: true
           vars:
             PRONOUN: yo
             TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentTu
-          skipExample: true
           vars:
             PRONOUN: tú
             TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentEl
-          skipExample: true
           vars:
             PRONOUN: él/ella/usted
             TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentNosotros
-          skipExample: true
           vars:
             PRONOUN: nosotros
             TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentVosotros
-          skipExample: true
           vars:
             PRONOUN: vosotros
             TENSE: _spanish-tense-present.jpeg
         - name: IndicativePresentEllos
-          skipExample: true
           vars:
             PRONOUN: ellos/ellas/ustedes
             TENSE: _spanish-tense-present.jpeg
 
         - name: ImperativeAffirmativeTu
-          skipExample: true
           vars:
             PRONOUN: tú
             TENSE: _spanish-tense-imperative.jpeg
         - name: ImperativeAffirmativeUsted
-          skipExample: true
           vars:
             PRONOUN: usted
             TENSE: _spanish-tense-imperative.jpeg
 
         - name: AutoConjugationIgnore
-          skipExample: true
           skipVoiceover: true
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
-        #   $$FIELD$$, $$FIELD_VOICEOVER$$, $$EXAMPLE$$, $$EXAMPLE_VOICEOVER$$, $$EXAMPLE_EXPLANATION$$
+        #   $$FIELD$$, $$FIELD_VOICEOVER$$
         #
         # Front layout is automatically wrapped with {{^$$FIELD$$}}{{/$$FIELD$$}}, so there is no need in
         # adding this manually
