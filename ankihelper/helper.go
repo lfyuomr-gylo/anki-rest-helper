@@ -41,7 +41,7 @@ func (h Helper) Run(conf ankihelperconf.Actions) error {
 	if err := h.ensureNoteTypes(conf.NoteTypes); err != nil {
 		return err
 	}
-	if err := h.populateNotes(ctx, conf.NotesPopulation); err != nil {
+	if err := h.processNotes(ctx, conf.NoteProcessing); err != nil {
 		return err
 	}
 	if err := h.generateTTS(conf); err != nil {
@@ -371,12 +371,12 @@ func (h Helper) applyOrganizationRule(rule ankihelperconf.NotesOrganizationRule)
 	return nil
 }
 
-func (h Helper) populateNotes(ctx context.Context, rules []ankihelperconf.NotesPopulationRule) error {
-	log.Println("Populate notes with auto-generated content...")
+func (h Helper) processNotes(ctx context.Context, rules []ankihelperconf.NoteProcessingRule) error {
+	log.Println("Process notes...")
 
 	for i, rule := range rules {
-		log.Printf("Running note population rule #%d...", i)
-		if err := h.applyPopulationRule(ctx, rule); err != nil {
+		log.Printf("Running note processing rule #%d...", i)
+		if err := h.applyProcessingRule(ctx, rule); err != nil {
 			return errorx.Decorate(err, "failed to execute note population rule #%d", i)
 		}
 	}
@@ -385,7 +385,7 @@ func (h Helper) populateNotes(ctx context.Context, rules []ankihelperconf.NotesP
 	return nil
 }
 
-func (h Helper) applyPopulationRule(ctx context.Context, rule ankihelperconf.NotesPopulationRule) error {
+func (h Helper) applyProcessingRule(ctx context.Context, rule ankihelperconf.NoteProcessingRule) error {
 	// 1. find notes to populate
 	noteIDs, err := h.ankiConnect.FindNotes(rule.NoteFilter)
 	if err != nil {
@@ -395,6 +395,7 @@ func (h Helper) applyPopulationRule(ctx context.Context, rule ankihelperconf.Not
 	if err != nil {
 		return err
 	}
+	log.Printf("Found %d notes to process...", len(notes))
 
 	// 2. for each note, run population
 	throttler := ratelimit.NewThrottler(rule.MinPauseBetweenExecutions)
@@ -403,9 +404,9 @@ func (h Helper) applyPopulationRule(ctx context.Context, rule ankihelperconf.Not
 		idx++
 		throttler.Throttle()
 
-		fieldUpdate, err := h.execNotePopulationForNote(ctx, rule, note, idx, len(notes))
+		fieldUpdate, err := h.processNote(ctx, rule, note, idx, len(notes))
 		if err != nil {
-			log.Printf("Skip failed note %d population, error: %s", noteID, err)
+			log.Printf("Skip failed note %d processing, error: %s", noteID, err)
 			continue
 		}
 		if err := h.ankiConnect.UpdateNoteFields(noteID, fieldUpdate); err != nil {
@@ -416,9 +417,9 @@ func (h Helper) applyPopulationRule(ctx context.Context, rule ankihelperconf.Not
 	return nil
 }
 
-func (h Helper) execNotePopulationForNote(
+func (h Helper) processNote(
 	ctx context.Context,
-	rule ankihelperconf.NotesPopulationRule,
+	rule ankihelperconf.NoteProcessingRule,
 	note ankiconnect.NoteInfo,
 	noteIdx, totalNotes int,
 ) (map[string]ankiconnect.FieldUpdate, error) {
@@ -449,33 +450,24 @@ func (h Helper) execNotePopulationForNote(
 		defer cancel()
 		cmdCtx = ctx
 	}
-	log.Printf("Executing note population command [%d/%d]: %s %s", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, " "))
+	log.Printf("Executing note processing command [%d/%d]: %s %s", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, " "))
 	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, rule.Exec.Command, args...)
 	if err != nil {
 		return nil, errorx.ExternalError.Wrap(err, "Note population command failed")
 	}
 
 	var commandOutParsed map[string]string
-	if err := json.Unmarshal(cmdOut, &commandOutParsed); err != nil {
-		return nil, errorx.ExternalError.Wrap(err, "Note population command's stdout is malformed")
+	if !stringx.IsBlank(string(cmdOut)) {
+		if err := json.Unmarshal(cmdOut, &commandOutParsed); err != nil {
+			return nil, errorx.ExternalError.Wrap(err, "Note processing command's stdout is malformed")
+		}
 	}
 
 	fieldValues := make(map[string]ankiconnect.FieldUpdate, len(commandOutParsed))
-	missingFields := rule.ProducedFields.Clone()
 	for field, value := range commandOutParsed {
-		if !rule.ProducedFields.Contains(field) {
-			log.Printf("WARNING: note population produced field unexpected field %q for note %d. Ignore it.", field, note.ID)
-			continue
-		}
-		missingFields.Delete(field)
-
-		if rule.OverwriteExisting || note.Fields[field] == "" {
+		if rule.OverwriteNonEmptyFields || note.Fields[field] == "" {
 			fieldValues[field] = ankiconnect.FieldUpdate{Value: value}
 		}
-	}
-	if missingFields.Len() > 0 {
-		missing := strings.Join(missingFields.AsSlice(), ", ")
-		log.Printf("WARNING: note population for note %d is missing the following expected fields: %s", note.ID, missing)
 	}
 
 	return fieldValues, nil

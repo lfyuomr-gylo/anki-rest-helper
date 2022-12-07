@@ -10,7 +10,7 @@ It interacts with Anki using REST API exposed via [AnkiConnect plugin](https://g
 - automatic cards organization: put your cards in the appropriate decks by defining organization rules.
 - note type generation with meta-templating of card templates. It's useful for verb conjugation learning.
 - static media files upload to Anki
-- automatic note content population using a separate tool. 
+- custom script-based note processing --- modify arbitrary fields of notes using a custom-defined script 
 
 # How to use it
 

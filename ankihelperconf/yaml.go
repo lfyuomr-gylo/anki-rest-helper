@@ -2,7 +2,6 @@ package ankihelperconf
 
 import (
 	"anki-rest-enhancer/util/lang"
-	"anki-rest-enhancer/util/lang/set"
 	"anki-rest-enhancer/util/stringx"
 	"fmt"
 	"github.com/joomcode/errorx"
@@ -220,7 +219,7 @@ type YAMLActions struct {
 	TTS               []YAMLAnkiTTS           `yaml:"tts"`
 	NoteTypes         []YAMLAnkiNoteType      `yaml:"noteTypes"`
 	CardsOrganization []YAMLNotesOrganization `yaml:"cardsOrganization"`
-	NotesPopulation   []YAMLNotesPopulation   `yaml:"notesPopulation"`
+	NoteProcessing    []YAMLNoteProcessing    `yaml:"noteProcessing"`
 }
 
 func (e YAMLActions) Parse(configDir string) (Actions, error) {
@@ -258,12 +257,12 @@ func (e YAMLActions) Parse(configDir string) (Actions, error) {
 		actions.CardsOrganization = append(actions.CardsOrganization, parsed)
 	}
 
-	for i, populationRule := range e.NotesPopulation {
+	for i, populationRule := range e.NoteProcessing {
 		parsed, err := populationRule.Parse(configDir)
 		if err != nil {
 			return Actions{}, errorx.Decorate(err, "failed to parse note population #%d", i)
 		}
-		actions.NotesPopulation = append(actions.NotesPopulation, parsed)
+		actions.NoteProcessing = append(actions.NoteProcessing, parsed)
 	}
 
 	return actions, nil
@@ -458,55 +457,32 @@ func (o YAMLNotesOrganization) Parse() (NotesOrganizationRule, error) {
 	}, nil
 }
 
-type YAMLNotesPopulation struct {
-	NoteFilter                    string   `yaml:"noteFilter"`
-	ProducedFields                []string `yaml:"producedFields"`
-	OverwriteExisting             bool     `yaml:"overwriteExisting"`
-	MinPauseBetweenExecutions     string   `yaml:"minPauseBetweenExecutions"`
-	Timeout                       string   `yaml:"timeout"`
-	DisableAutoFilterOptimization *bool    `yaml:"disableAutoFilterOptimization"`
+type YAMLNoteProcessing struct {
+	NoteFilter                    string `yaml:"noteFilter"`
+	OverwriteNonEmptyFields       bool   `yaml:"overwriteNonEmptyFields"`
+	MinPauseBetweenExecutions     string `yaml:"minPauseBetweenExecutions"`
+	Timeout                       string `yaml:"timeout"`
+	DisableAutoFilterOptimization *bool  `yaml:"disableAutoFilterOptimization"`
 
 	Exec YAMLNotesPopulationExec `yaml:"exec"`
 }
 
-func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, error) {
-	fields := np.ProducedFields
-	if len(fields) == 0 {
-		return NotesPopulationRule{}, errorx.IllegalArgument.New("note population should produce at least one field")
-	}
-
-	noteFilter := np.NoteFilter
-	if np.shouldOptimizeFilter() {
-		// add filter to skip notes that have all the produced fields already set
-		var fieldsFilterBuilder strings.Builder
-		fieldsFilterBuilder.WriteString(fields[0])
-		fieldsFilterBuilder.WriteRune(':')
-		for _, field := range fields[1:] {
-			fieldsFilterBuilder.WriteString(" or ")
-			fieldsFilterBuilder.WriteString(field)
-			fieldsFilterBuilder.WriteRune(':')
-		}
-		fieldsFilter := fieldsFilterBuilder.String()
-
-		if noteFilter == "" {
-			noteFilter = fieldsFilter
-			log.Printf("No note filter specified for note population rule, generate default filter: %s", noteFilter)
-		} else {
-			noteFilter = fmt.Sprintf("%s (%s)", noteFilter, fieldsFilter)
-			log.Printf("Automatically adjust note filter in population rule: %s", noteFilter)
-		}
+func (np YAMLNoteProcessing) Parse(configDir string) (NoteProcessingRule, error) {
+	noteFilter := strings.NewReplacer("\t", " ", "\n", " ", "\r", "").Replace(np.NoteFilter)
+	if stringx.IsBlank(noteFilter) {
+		return NoteProcessingRule{}, errorx.IllegalArgument.New("noteFilter must be specified")
 	}
 
 	exec, err := np.Exec.Parse(configDir)
 	if err != nil {
-		return NotesPopulationRule{}, err
+		return NoteProcessingRule{}, err
 	}
 
 	var minPauseBetweenExecutions time.Duration
 	if raw := np.MinPauseBetweenExecutions; raw != "" {
 		parsed, err := time.ParseDuration(raw)
 		if err != nil {
-			return NotesPopulationRule{}, errorx.IllegalFormat.Wrap(err, "malformed minPauseBetweenExecutions")
+			return NoteProcessingRule{}, errorx.IllegalFormat.Wrap(err, "malformed minPauseBetweenExecutions")
 		}
 		minPauseBetweenExecutions = parsed
 	}
@@ -515,34 +491,18 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 	if raw := np.Timeout; raw != "" {
 		parsed, err := time.ParseDuration(raw)
 		if err != nil {
-			return NotesPopulationRule{}, errorx.IllegalFormat.Wrap(err, "malformed timeout")
+			return NoteProcessingRule{}, errorx.IllegalFormat.Wrap(err, "malformed timeout")
 		}
 		timeout = parsed
 	}
 
-	return NotesPopulationRule{
+	return NoteProcessingRule{
 		NoteFilter:                noteFilter,
-		ProducedFields:            set.FromSlice(fields...),
 		MinPauseBetweenExecutions: minPauseBetweenExecutions,
 		Timeout:                   timeout,
-		OverwriteExisting:         np.OverwriteExisting,
+		OverwriteNonEmptyFields:   np.OverwriteNonEmptyFields,
 		Exec:                      exec,
 	}, nil
-}
-
-func (np YAMLNotesPopulation) shouldOptimizeFilter() bool {
-	switch {
-	case np.NoteFilter == "":
-		return true
-	case np.DisableAutoFilterOptimization == nil:
-		if np.OverwriteExisting {
-			log.Printf("Disable automatic note filter optimization in population rule because overwriteExisting is enabled and filter is specified: %s", np.NoteFilter)
-			return false
-		}
-		return true
-	default:
-		return *np.DisableAutoFilterOptimization
-	}
 }
 
 type YAMLNotesPopulationExec struct {
@@ -550,35 +510,35 @@ type YAMLNotesPopulationExec struct {
 	Args    []string `yaml:"args"`
 }
 
-func (e YAMLNotesPopulationExec) Parse(configDir string) (NotesPopulationExec, error) {
+func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, error) {
 	if stringx.IsBlank(e.Command) {
-		return NotesPopulationExec{}, errorx.IllegalArgument.New("exec command must be specified")
+		return NoteProcessingExec{}, errorx.IllegalArgument.New("exec command must be specified")
 	}
 	if strings.HasPrefix(e.Command, "./") || strings.HasPrefix(e.Command, "../") {
 		e.Command = filepath.Join(configDir, e.Command)
 		log.Printf("Resolve relative exec command path in note population rule against configuration directory: %s", e.Command)
 	}
 
-	var args []NotesPopulationExecArg
+	var args []NoteProcessingExecArg
 	for i, arg := range e.Args {
 		if strings.Contains(arg, templateOpen) && strings.Contains(arg, templateClose) {
 			parsed, err := template.New(fmt.Sprintf("arg#%d", i)).
 				Delims(templateOpen, templateClose).
 				Parse(arg)
 			if err != nil {
-				return NotesPopulationExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse exec argument #d", i)
+				return NoteProcessingExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse exec argument #%d", i)
 			}
-			args = append(args, NotesPopulationExecArg{
+			args = append(args, NoteProcessingExecArg{
 				Template: parsed,
 			})
 		} else {
-			args = append(args, NotesPopulationExecArg{
+			args = append(args, NoteProcessingExecArg{
 				PlainString: lang.New(arg),
 			})
 		}
 	}
 
-	return NotesPopulationExec{
+	return NoteProcessingExec{
 		Command: e.Command,
 		Args:    args,
 	}, nil

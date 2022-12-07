@@ -46,5 +46,5 @@ func (set Set[T]) AsSlice() []T {
 }
 
 func (set Set[T]) String() string {
-	return fmt.Sprintf("%s", map[T]struct{}(set))
+	return fmt.Sprintf("%v", map[T]struct{}(set))
 }

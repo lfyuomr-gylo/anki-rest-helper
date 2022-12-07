@@ -228,31 +228,29 @@ actions:
          color: blue;
         }
 
-  # TODO: rename population -> processing etc.
-  notesPopulation:
-    - producedFields:
-        - IndicativePresentYo
-        - IndicativePresentTu
-        - IndicativePresentEl
-        - IndicativePresentNosotros
-        - IndicativePresentVosotros
-        - IndicativePresentEllos
-        - ImperativeAffirmativeTu
-        - ImperativeAffirmativeUsted
-      # Note filter will be automatically adjusted to skip notes that have all of the produced fields
-      noteFilter: "AutoConjugationIgnore:"
+  noteProcessing:
+    # only process notes that have at least one of the conjugation fields empty
+    - noteFilter: |
+        AutoConjugationIgnore: AND (
+          IndicativePresentYo:
+          OR IndicativePresentTu:
+          OR IndicativePresentEl:
+          OR IndicativePresentNosotros:
+          OR IndicativePresentVosotros:
+          OR IndicativePresentEllos:
+          OR ImperativeAffirmativeTu:
+          OR ImperativeAffirmativeUsted:
+        )
       # Execute specified command with specified arguments
       # and read values of note fields from its stdout.
-      # Command should print field values in JSON format.
-      #
-      # Note fields not listed in 'producedFields' will be ignored.
+      # Command should print new values of note fields as a JSON object.
+      overwriteNonEmptyFields: false
       exec:
         command: ./conjugate-spanish-verb.sh
         args:
           - "$$.Note.Fields.Word$$"
       minPauseBetweenExecutions: 1200ms
       timeout: 5s
-      overwriteExisting: false
   cardsOrganization:
     - filter: -note:SpanishVerb*
       targetDeck: Spanish::Other

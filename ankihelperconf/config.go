@@ -1,7 +1,6 @@
 package ankihelperconf
 
 import (
-	"anki-rest-enhancer/util/lang/set"
 	"net/url"
 	"regexp"
 	"text/template"
@@ -38,7 +37,7 @@ type Actions struct {
 	TTS               []AnkiTTS
 	NoteTypes         []AnkiNoteType
 	CardsOrganization []NotesOrganizationRule
-	NotesPopulation   []NotesPopulationRule
+	NoteProcessing    []NoteProcessingRule
 }
 
 type AnkiUploadMedia struct {
@@ -79,22 +78,21 @@ type NotesOrganizationRule struct {
 	TargetDeckName string
 }
 
-type NotesPopulationRule struct {
+type NoteProcessingRule struct {
 	NoteFilter                string
-	ProducedFields            set.Set[string]
-	OverwriteExisting         bool
+	OverwriteNonEmptyFields   bool
 	MinPauseBetweenExecutions time.Duration
 	Timeout                   time.Duration
 
-	Exec NotesPopulationExec
+	Exec NoteProcessingExec
 }
 
-type NotesPopulationExec struct {
+type NoteProcessingExec struct {
 	Command string
-	Args    []NotesPopulationExecArg
+	Args    []NoteProcessingExecArg
 }
 
-type NotesPopulationExecArg struct {
+type NoteProcessingExecArg struct {
 	// oneof
 	PlainString *string
 	Template    *template.Template
