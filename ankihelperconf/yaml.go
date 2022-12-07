@@ -463,6 +463,7 @@ type YAMLNotesPopulation struct {
 	ProducedFields                []string `yaml:"producedFields"`
 	OverwriteExisting             bool     `yaml:"overwriteExisting"`
 	MinPauseBetweenExecutions     string   `yaml:"minPauseBetweenExecutions"`
+	Timeout                       string   `yaml:"timeout"`
 	DisableAutoFilterOptimization *bool    `yaml:"disableAutoFilterOptimization"`
 
 	Exec YAMLNotesPopulationExec `yaml:"exec"`
@@ -503,17 +504,27 @@ func (np YAMLNotesPopulation) Parse(configDir string) (NotesPopulationRule, erro
 
 	var minPauseBetweenExecutions time.Duration
 	if raw := np.MinPauseBetweenExecutions; raw != "" {
-		parsed, err := time.ParseDuration(np.MinPauseBetweenExecutions)
+		parsed, err := time.ParseDuration(raw)
 		if err != nil {
 			return NotesPopulationRule{}, errorx.IllegalFormat.Wrap(err, "malformed minPauseBetweenExecutions")
 		}
 		minPauseBetweenExecutions = parsed
 	}
 
+	var timeout time.Duration
+	if raw := np.Timeout; raw != "" {
+		parsed, err := time.ParseDuration(raw)
+		if err != nil {
+			return NotesPopulationRule{}, errorx.IllegalFormat.Wrap(err, "malformed timeout")
+		}
+		timeout = parsed
+	}
+
 	return NotesPopulationRule{
 		NoteFilter:                noteFilter,
 		ProducedFields:            set.FromSlice(fields...),
 		MinPauseBetweenExecutions: minPauseBetweenExecutions,
+		Timeout:                   timeout,
 		OverwriteExisting:         np.OverwriteExisting,
 		Exec:                      exec,
 	}, nil

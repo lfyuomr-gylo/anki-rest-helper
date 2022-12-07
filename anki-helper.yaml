@@ -250,6 +250,7 @@ actions:
         args:
           - "$$.Note.Fields.Word$$"
       minPauseBetweenExecutions: 1200ms
+      timeout: 5s
       overwriteExisting: false
   cardsOrganization:
     - filter: -note:SpanishVerb*

@@ -5,14 +5,15 @@ import (
 	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
 	"anki-rest-enhancer/ratelimit"
+	"anki-rest-enhancer/util/execx"
 	"anki-rest-enhancer/util/iox"
 	"anki-rest-enhancer/util/stringx"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -32,13 +33,15 @@ type Helper struct {
 }
 
 func (h Helper) Run(conf ankihelperconf.Actions) error {
+	ctx := context.TODO()
+
 	if err := h.uploadMedia(conf.UploadMedia); err != nil {
 		return err
 	}
 	if err := h.ensureNoteTypes(conf.NoteTypes); err != nil {
 		return err
 	}
-	if err := h.populateNotes(conf.NotesPopulation); err != nil {
+	if err := h.populateNotes(ctx, conf.NotesPopulation); err != nil {
 		return err
 	}
 	if err := h.generateTTS(conf); err != nil {
@@ -368,12 +371,12 @@ func (h Helper) applyOrganizationRule(rule ankihelperconf.NotesOrganizationRule)
 	return nil
 }
 
-func (h Helper) populateNotes(rules []ankihelperconf.NotesPopulationRule) error {
+func (h Helper) populateNotes(ctx context.Context, rules []ankihelperconf.NotesPopulationRule) error {
 	log.Println("Populate notes with auto-generated content...")
 
 	for i, rule := range rules {
 		log.Printf("Running note population rule #%d...", i)
-		if err := h.applyPopulationRule(rule); err != nil {
+		if err := h.applyPopulationRule(ctx, rule); err != nil {
 			return errorx.Decorate(err, "failed to execute note population rule #%d", i)
 		}
 	}
@@ -382,7 +385,7 @@ func (h Helper) populateNotes(rules []ankihelperconf.NotesPopulationRule) error 
 	return nil
 }
 
-func (h Helper) applyPopulationRule(rule ankihelperconf.NotesPopulationRule) error {
+func (h Helper) applyPopulationRule(ctx context.Context, rule ankihelperconf.NotesPopulationRule) error {
 	// 1. find notes to populate
 	noteIDs, err := h.ankiConnect.FindNotes(rule.NoteFilter)
 	if err != nil {
@@ -400,7 +403,7 @@ func (h Helper) applyPopulationRule(rule ankihelperconf.NotesPopulationRule) err
 		idx++
 		throttler.Throttle()
 
-		fieldUpdate, err := h.execNotePopulationForNote(rule, note, idx, len(notes))
+		fieldUpdate, err := h.execNotePopulationForNote(ctx, rule, note, idx, len(notes))
 		if err != nil {
 			log.Printf("Skip failed note %d population, error: %s", noteID, err)
 			continue
@@ -414,6 +417,7 @@ func (h Helper) applyPopulationRule(rule ankihelperconf.NotesPopulationRule) err
 }
 
 func (h Helper) execNotePopulationForNote(
+	ctx context.Context,
 	rule ankihelperconf.NotesPopulationRule,
 	note ankiconnect.NoteInfo,
 	noteIdx, totalNotes int,
@@ -438,9 +442,15 @@ func (h Helper) execNotePopulationForNote(
 		}
 	}
 
-	cmd := exec.Command(rule.Exec.Command, args...)
-	log.Printf("Executing note population command [%d/%d]: %s", noteIdx, totalNotes, cmd)
-	cmdOut, err := cmd.Output()
+	cmdCtx := ctx
+	if rule.Timeout > 0 {
+		// currently this context deadline is not respected by
+		ctx, cancel := context.WithTimeout(cmdCtx, rule.Timeout)
+		defer cancel()
+		cmdCtx = ctx
+	}
+	log.Printf("Executing note population command [%d/%d]: %s %s", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, " "))
+	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, rule.Exec.Command, args...)
 	if err != nil {
 		return nil, errorx.ExternalError.Wrap(err, "Note population command failed")
 	}

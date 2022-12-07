@@ -84,6 +84,7 @@ type NotesPopulationRule struct {
 	ProducedFields            set.Set[string]
 	OverwriteExisting         bool
 	MinPauseBetweenExecutions time.Duration
+	Timeout                   time.Duration
 
 	Exec NotesPopulationExec
 }
