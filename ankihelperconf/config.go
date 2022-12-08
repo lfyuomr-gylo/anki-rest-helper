@@ -67,10 +67,10 @@ type AnkiNoteType struct {
 type AnkiNoteField YAMLAnkiNoteField
 
 type AnkiCardTemplate struct {
-	Name      string
+	Name      *template.Template
 	ForFields []AnkiNoteField
-	Front     string
-	Back      string
+	Front     *template.Template
+	Back      *template.Template
 }
 
 type NotesOrganizationRule struct {

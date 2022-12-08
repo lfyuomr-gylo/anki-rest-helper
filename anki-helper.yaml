@@ -79,55 +79,57 @@ actions:
         #   FieldVoiceover (unless skipVoiceover: true)
         - name: Word
           vars:
-            PRONOUN: ""
-            TENSE: _spanish-infinitive.png
+            pronoun: ""
+            tense: _spanish-infinitive.png
         - name: Explanation
           skipVoiceover: true
 
         - name: IndicativePresentYo
           vars:
-            PRONOUN: yo
-            TENSE: _spanish-tense-present.jpeg
+            pronoun: yo
+            tense: _spanish-tense-present.jpeg
         - name: IndicativePresentTu
           vars:
-            PRONOUN: tú
-            TENSE: _spanish-tense-present.jpeg
+            pronoun: tú
+            tense: _spanish-tense-present.jpeg
         - name: IndicativePresentEl
           vars:
-            PRONOUN: él/ella/usted
-            TENSE: _spanish-tense-present.jpeg
+            pronoun: él/ella/usted
+            tense: _spanish-tense-present.jpeg
         - name: IndicativePresentNosotros
           vars:
-            PRONOUN: nosotros
-            TENSE: _spanish-tense-present.jpeg
+            pronoun: nosotros
+            tense: _spanish-tense-present.jpeg
         - name: IndicativePresentVosotros
           vars:
-            PRONOUN: vosotros
-            TENSE: _spanish-tense-present.jpeg
+            pronoun: vosotros
+            tense: _spanish-tense-present.jpeg
         - name: IndicativePresentEllos
           vars:
-            PRONOUN: ellos/ellas/ustedes
-            TENSE: _spanish-tense-present.jpeg
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-present.jpeg
 
         - name: ImperativeAffirmativeTu
           vars:
-            PRONOUN: tú
-            TENSE: _spanish-tense-imperative.jpeg
+            pronoun: tú
+            tense: _spanish-tense-imperative.jpeg
         - name: ImperativeAffirmativeUsted
           vars:
-            PRONOUN: usted
-            TENSE: _spanish-tense-imperative.jpeg
+            pronoun: usted
+            tense: _spanish-tense-imperative.jpeg
 
         - name: AutoConjugationIgnore
           skipVoiceover: true
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
-        #   $$FIELD$$, $$FIELD_VOICEOVER$$
+        #   $$.Field$$, $$.FieldVoiceover$$
+        # 
+        # Additionally, variables attached to a field are available in the template as $$.Vars.varName$$.
         #
-        # Front layout is automatically wrapped with {{^$$FIELD$$}}{{/$$FIELD$$}}, so there is no need in
+        # Front layout is automatically wrapped with {{^$$.Field$$}}{{/$$.Field$$}}, so there is no need in
         # adding this manually
-        - name: "FillIn$$FIELD$$"
+        - name: "FillIn$$.Field$$"
           forFields:
             - Word
             - IndicativePresentYo
@@ -139,11 +141,11 @@ actions:
             - ImperativeAffirmativeTu
             - ImperativeAffirmativeUsted
           front: |
-            <img src="$$TENSE$$"><br><br>
+            <img src="$$.Vars.tense$$"><br><br>
             <i>{{text:Explanation}}</i><br>
-            <div>$$PRONOUN$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
 
-            {{type::$$FIELD$$}}
+            {{type::$$.Field$$}}
 
             <script>
             var clozes = document.querySelectorAll(".mycloze");
@@ -165,12 +167,12 @@ actions:
             });
             </script>
           back: |
-            <img src="$$TENSE$$"><br><br>
+            <img src="$$.Vars.tense$$"><br><br>
             <i>{{text:Explanation}}</i><br>
-            <div>$$PRONOUN$$ <b><span class='cloze'>{{text:$$FIELD$$}}</span></b>{{$$FIELD_VOICEOVER$$}}</div>
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
 
             <hr id=answer>
-            {{type::$$FIELD$$}}
+            {{type::$$.Field$$}}
 
             <script>
             var clozes = document.querySelectorAll(".mycloze");

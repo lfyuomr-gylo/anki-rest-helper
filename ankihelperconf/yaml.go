@@ -12,13 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"text/template"
 	"time"
-)
-
-const (
-	templateOpen  = "$$"
-	templateClose = "$$"
 )
 
 type YAML struct {
@@ -428,11 +422,24 @@ func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (Anki
 		fields = append(fields, field)
 	}
 
+	name, err := ParseTextTemplate("CardTemplateName", t.Name)
+	if err != nil {
+		return AnkiCardTemplate{}, errorx.IllegalFormat.Wrap(err, "failed to parse template of card template name")
+	}
+	front, err := ParseTextTemplate("CardTemplateFront", t.Front)
+	if err != nil {
+		return AnkiCardTemplate{}, errorx.IllegalFormat.Wrap(err, "failed to parse template of card template front")
+	}
+	back, err := ParseTextTemplate("CardTemplateBack", t.Back)
+	if err != nil {
+		return AnkiCardTemplate{}, errorx.IllegalFormat.Wrap(err, "failed to parse template of card template back")
+	}
+
 	return AnkiCardTemplate{
-		Name:      t.Name,
+		Name:      name,
 		ForFields: fields,
-		Front:     t.Front,
-		Back:      t.Back,
+		Front:     front,
+		Back:      back,
 	}, nil
 }
 
@@ -521,9 +528,7 @@ func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, er
 	var args []NoteProcessingExecArg
 	for i, arg := range e.Args {
 		if strings.Contains(arg, templateOpen) && strings.Contains(arg, templateClose) {
-			parsed, err := template.New(fmt.Sprintf("arg#%d", i)).
-				Delims(templateOpen, templateClose).
-				Parse(arg)
+			parsed, err := ParseTextTemplate(fmt.Sprintf("arg#%d", i), arg)
 			if err != nil {
 				return NoteProcessingExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse exec argument #%d", i)
 			}

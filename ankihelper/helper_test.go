@@ -9,6 +9,7 @@ import (
 	"anki-rest-enhancer/azuretts/azurettsmock"
 	"github.com/stretchr/testify/suite"
 	"testing"
+	"text/template"
 )
 
 func TestEnhancer(t *testing.T) {
@@ -50,7 +51,7 @@ func (s *EnhancerSuite) TestNoteTypeCreation_AlreadyExists() {
 	actions := ankihelperconf.Actions{NoteTypes: []ankihelperconf.AnkiNoteType{{
 		Name:      modelName,
 		Fields:    []ankihelperconf.AnkiNoteField{{Name: "Foo"}, {Name: "Bar"}},
-		Templates: []ankihelperconf.AnkiCardTemplate{{Name: "Card1", ForFields: []ankihelperconf.AnkiNoteField{{Name: "foo"}}}},
+		Templates: []ankihelperconf.AnkiCardTemplate{{Name: s.mustParse("Card1"), ForFields: []ankihelperconf.AnkiNoteField{{Name: "foo"}}}},
 	}}}
 
 	// when:
@@ -82,10 +83,10 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithVoiceover() {
 		CSS:    ".foo { font-size: large; }",
 		Fields: []ankihelperconf.AnkiNoteField{fieldName},
 		Templates: []ankihelperconf.AnkiCardTemplate{{
-			Name:      "WordTemplate",
+			Name:      s.mustParse("WordTemplate"),
 			ForFields: []ankihelperconf.AnkiNoteField{fieldName},
-			Front:     "$TITLE$: {{ $FIELD$ }}$MY_EMPTY_FIELD$",
-			Back:      "{{ $FIELD_VOICEOVER$ }}",
+			Front:     s.mustParse("$$.Vars.TITLE$$: {{ $$.Field$$ }}$$.Vars.MY_EMPTY_FIELD$$"),
+			Back:      s.mustParse("{{ $$.FieldVoiceover$$ }}"),
 		}},
 	}}}
 	expectedModel := ankiconnect.CreateModelParams{
@@ -131,10 +132,10 @@ func (s *EnhancerSuite) TestNoteTypeCreation_CreateNewWithNoVoiceover() {
 		CSS:    css,
 		Fields: []ankihelperconf.AnkiNoteField{fieldComment},
 		Templates: []ankihelperconf.AnkiCardTemplate{{
-			Name:      "CommentTemplate",
+			Name:      s.mustParse("CommentTemplate"),
 			ForFields: []ankihelperconf.AnkiNoteField{fieldComment},
-			Front:     "Field Name: $FIELD$",
-			Back:      "Field Conent: {{ $FIELD$ }}",
+			Front:     s.mustParse("Field Name: $$.Field$$"),
+			Back:      s.mustParse("Field Conent: {{ $$.Field$$ }}"),
 		}},
 	}}}
 	expectedModel := ankiconnect.CreateModelParams{
@@ -271,4 +272,10 @@ func (s *EnhancerSuite) TestTTSGeneration_SingleErrorIsIgnored() {
 	// then:
 	s.Require().NoError(err)
 	s.Require().Equal(expectedUpdates, noteUpdates)
+}
+
+func (s *EnhancerSuite) mustParse(text string) *template.Template {
+	parsed, err := ankihelperconf.ParseTextTemplate("test", text)
+	s.Require().NoError(err)
+	return parsed
 }

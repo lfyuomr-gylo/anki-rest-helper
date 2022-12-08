@@ -8,6 +8,7 @@ import (
 	"anki-rest-enhancer/util/execx"
 	"anki-rest-enhancer/util/iox"
 	"anki-rest-enhancer/util/stringx"
+	"anki-rest-enhancer/util/templatex"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -255,38 +256,35 @@ func (h Helper) createNoteType(conf ankihelperconf.AnkiNoteType) error {
 	fieldNames = append(fieldNames, voiceoverFields...)
 
 	templates := make([]ankiconnect.CreateModelCardTemplate, 0, len(conf.Templates))
-	for _, template := range conf.Templates {
-		for _, field := range template.ForFields {
-			names := h.fieldNames(field)
-			substitutions := stringx.RemoveEmptyValuesInPlace(map[string]string{
-				"FIELD":           names.Field,
-				"FIELD_VOICEOVER": names.FieldVoiceover,
-			})
-			for name, val := range field.Vars {
-				if _, ok := substitutions[name]; ok {
-					return errorx.IllegalState.New("custom variable %q collides with a default variable in template %q", name, template.Name)
-				}
-				substitutions[name] = val
+	for tmplIdx, cardTemplate := range conf.Templates {
+		for _, field := range cardTemplate.ForFields {
+			const voiceoverSuffix = "Voiceover"
+			substitutions := map[string]any{
+				"Field": field.Name,
+				"Vars":  field.Vars,
+			}
+			if !field.SkipVoiceover {
+				substitutions["FieldVoiceover"] = field.Name + voiceoverSuffix
 			}
 
-			templateName, err := substituteVariables(template.Name, substitutions)
+			cardTemplateName, err := templatex.Execute(cardTemplate.Name, substitutions)
 			if err != nil {
-				return errorx.Decorate(err, "failed to build card template name for template %q and field %q", template.Name, field.Name)
+				return errorx.Decorate(err, "failed to build card template name for template #%d and field %q", tmplIdx, field.Name)
 			}
-			if err := ankihelperconf.ValidateName(templateName); err != nil {
-				return errorx.Decorate(err, "got invalid template name after variables substitution: %s", templateName)
+			if err := ankihelperconf.ValidateName(cardTemplateName); err != nil {
+				return errorx.Decorate(err, "got invalid template name after variables substitution: %s", cardTemplateName)
 			}
-			front, err := substituteVariables(template.Front, substitutions)
+			front, err := templatex.Execute(cardTemplate.Front, substitutions)
 			if err != nil {
-				return errorx.Decorate(err, "failed to build card template front for %q and field %q", template.Name, field.Name)
+				return errorx.Decorate(err, "failed to build card template front for template #%d and field %q", tmplIdx, field.Name)
 			}
-			back, err := substituteVariables(template.Back, substitutions)
+			back, err := templatex.Execute(cardTemplate.Back, substitutions)
 			if err != nil {
-				return errorx.Decorate(err, "failed to build card template back for %q and field %q", template.Name, field.Name)
+				return errorx.Decorate(err, "failed to build card template back for template #%d and field %q", tmplIdx, field.Name)
 			}
 
 			templates = append(templates, ankiconnect.CreateModelCardTemplate{
-				Name:  templateName,
+				Name:  cardTemplateName,
 				Front: fmt.Sprintf("{{#%s}}\n%s\n{{/%s}}", field.Name, front, field.Name),
 				Back:  back,
 			})
