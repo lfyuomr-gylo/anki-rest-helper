@@ -15,6 +15,7 @@ type API struct {
 	FindCardsFunc        func(query string) ([]ankiconnect.CardID, error)
 	ChangeDeckFunc       func(deckName string, noteIDs []ankiconnect.CardID) error
 	StoreMediaFileFunc   func(fileName string, fileData io.Reader, replaceExisting bool) error
+	AddTagsFn            func(noteIDs []ankiconnect.NoteID, tags []string) error
 }
 
 var _ ankiconnect.API = (*API)(nil)
@@ -77,4 +78,11 @@ func (api *API) StoreMediaFile(fileName string, fileData io.Reader, replaceExist
 		return behaviour(fileName, fileData, replaceExisting)
 	}
 	panic(errorx.Panic(errorx.NotImplemented.New("Mock behaviour is not set for method StoreMediaFile")))
+}
+
+func (api *API) AddTags(noteIDs []ankiconnect.NoteID, tags []string) error {
+	if behaviour := api.AddTagsFn; behaviour != nil {
+		return behaviour(noteIDs, tags)
+	}
+	panic(errorx.Panic(errorx.NotImplemented.New("Moch behaviour is not set for method AddTags")))
 }

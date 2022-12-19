@@ -465,7 +465,6 @@ func (o YAMLNotesOrganization) Parse() (NotesOrganizationRule, error) {
 
 type YAMLNoteProcessing struct {
 	NoteFilter                    string `yaml:"noteFilter"`
-	OverwriteNonEmptyFields       bool   `yaml:"overwriteNonEmptyFields"`
 	MinPauseBetweenExecutions     string `yaml:"minPauseBetweenExecutions"`
 	Timeout                       string `yaml:"timeout"`
 	DisableAutoFilterOptimization *bool  `yaml:"disableAutoFilterOptimization"`
@@ -506,7 +505,6 @@ func (np YAMLNoteProcessing) Parse(configDir string) (NoteProcessingRule, error)
 		NoteFilter:                noteFilter,
 		MinPauseBetweenExecutions: minPauseBetweenExecutions,
 		Timeout:                   timeout,
-		OverwriteNonEmptyFields:   np.OverwriteNonEmptyFields,
 		Exec:                      exec,
 	}, nil
 }
@@ -514,6 +512,7 @@ func (np YAMLNoteProcessing) Parse(configDir string) (NoteProcessingRule, error)
 type YAMLNotesPopulationExec struct {
 	Command string   `yaml:"command"`
 	Args    []string `yaml:"args"`
+	Stdin   string   `yaml:"stdin"`
 }
 
 func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, error) {
@@ -542,9 +541,19 @@ func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, er
 		}
 	}
 
+	stdin := NoteProcessingExecArg{PlainString: lang.New(e.Stdin)}
+	if strings.Contains(e.Stdin, templateOpen) && strings.Contains(e.Stdin, templateClose) {
+		parsed, err := ParseTextTemplate("stdin", e.Stdin)
+		if err != nil {
+			return NoteProcessingExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse stdin template")
+		}
+		stdin = NoteProcessingExecArg{Template: parsed}
+	}
+
 	return NoteProcessingExec{
 		Command: e.Command,
 		Args:    args,
+		Stdin:   stdin,
 	}, nil
 }
 

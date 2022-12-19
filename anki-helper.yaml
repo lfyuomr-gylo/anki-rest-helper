@@ -117,9 +117,6 @@ actions:
           vars:
             pronoun: usted
             tense: _spanish-tense-imperative.jpeg
-
-        - name: AutoConjugationIgnore
-          skipVoiceover: true
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -219,22 +216,35 @@ actions:
         }
 
   noteProcessing:
-    # only process notes that have at least one of the conjugation fields empty
     - noteFilter: |
-        AutoConjugationIgnore: AND (
-          IndicativePresentYo:
-          OR IndicativePresentTu:
-          OR IndicativePresentEl:
-          OR IndicativePresentNosotros:
-          OR IndicativePresentVosotros:
-          OR IndicativePresentEllos:
-          OR ImperativeAffirmativeTu:
-          OR ImperativeAffirmativeUsted:
-        )
+        (IndicativePresentYo:- -tag:conjugation_skip:IndicativePresentYo)
+        OR (IndicativePresentTu:- -tag:conjugation_skip:IndicativePresentTu)
+        OR (IndicativePresentEl:- -tag:conjugation_skip:IndicativePresentEl)
+        OR (IndicativePresentNosotros:- -tag:conjugation_skip:IndicativePresentNosotros)
+        OR (IndicativePresentVosotros:- -tag:conjugation_skip:IndicativePresentVosotros)
+        OR (IndicativePresentEllos:- -tag:conjugation_skip:IndicativePresentEllos)
+        OR (ImperativeAffirmativeTu:- -tag:conjugation_skip:ImperativeAffirmativeTu)
+        OR (ImperativeAffirmativeUsted:- -tag:conjugation_skip:ImperativeAffirmativeUsted)
       # Execute specified command with specified arguments
       # and read values of note fields from its stdout.
-      # Command should print new values of note fields as a JSON object.
-      overwriteNonEmptyFields: false
+      # Command should print a JSON array of modification commands.
+      # Supported commands:
+      # {"set_field": {"field": "value"}}
+      # {"add_tag": "tag"}
+      # {"set_field_if_not_empty": {"field": "value"}}
+      exec:
+        command: ./disable_skipped_conjugation.py
+        stdin: "$$ .Note.Fields | to_json $$"
+    # only process notes that have at least one of the conjugation fields empty
+    - noteFilter: |
+        (IndicativePresentYo: -tag:conjugation_skip:IndicativePresentYo)
+        OR (IndicativePresentTu: -tag:conjugation_skip:IndicativePresentTu)
+        OR (IndicativePresentEl: -tag:conjugation_skip:IndicativePresentEl)
+        OR (IndicativePresentNosotros: -tag:conjugation_skip:IndicativePresentNosotros)
+        OR (IndicativePresentVosotros: -tag:conjugation_skip:IndicativePresentVosotros)
+        OR (IndicativePresentEllos: -tag:conjugation_skip:IndicativePresentEllos)
+        OR (ImperativeAffirmativeTu: -tag:conjugation_skip:ImperativeAffirmativeTu)
+        OR (ImperativeAffirmativeUsted: -tag:conjugation_skip:ImperativeAffirmativeUsted)
       exec:
         command: ./conjugate-spanish-verb.sh
         args:

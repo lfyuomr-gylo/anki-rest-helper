@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -95,8 +96,8 @@ func (api api) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 	}}
 	for field, fieldUpdate := range fields {
 		switch {
-		case fieldUpdate.Value != "":
-			params.Note.Fields[field] = fieldUpdate.Value
+		case fieldUpdate.Value != nil:
+			params.Note.Fields[field] = *fieldUpdate.Value
 		case len(fieldUpdate.AudioData) > 0:
 			fileName := fmt.Sprintf("%x.mp3", md5.Sum(fieldUpdate.AudioData))
 			params.Note.Audio = append(params.Note.Audio, updateNoteFieldsAudio{
@@ -135,6 +136,19 @@ func (api api) ChangeDeck(deckName string, cardIDs []CardID) error {
 		return err
 	}
 	return nil
+}
+
+func (api api) AddTags(noteIDs []NoteID, tags []string) error {
+	if len(tags) == 0 {
+		return nil
+	}
+
+	params := addTagsParams{
+		Notes: noteIDs,
+		Tags:  strings.Join(tags, " "),
+	}
+	_, err := api.doReq(params, 5)
+	return err
 }
 
 func (api api) doReq(params interface{}, maxAttempts int) (interface{}, error) {

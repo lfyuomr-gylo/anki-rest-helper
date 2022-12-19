@@ -80,7 +80,6 @@ type NotesOrganizationRule struct {
 
 type NoteProcessingRule struct {
 	NoteFilter                string
-	OverwriteNonEmptyFields   bool
 	MinPauseBetweenExecutions time.Duration
 	Timeout                   time.Duration
 
@@ -90,6 +89,7 @@ type NoteProcessingRule struct {
 type NoteProcessingExec struct {
 	Command string
 	Args    []NoteProcessingExecArg
+	Stdin   NoteProcessingExecArg
 }
 
 type NoteProcessingExecArg struct {

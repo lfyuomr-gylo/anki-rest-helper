@@ -4,12 +4,22 @@ import (
 	"context"
 	"io"
 	"os/exec"
+	"strings"
 )
+
+type Params struct {
+	Command string
+	Args    []string
+	Stdin   string
+}
 
 // RunAndCollectOutput properly handles the case described in https://github.com/golang/go/issues/23019 , i.e.
 // it doesn't hang if executed command spawns a long-living subprocess, passed its stdout to it and then exited shortly.
-func RunAndCollectOutput(ctx context.Context, command string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, command, args...)
+func RunAndCollectOutput(ctx context.Context, params Params) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, params.Command, params.Args...)
+	if params.Stdin != "" {
+		cmd.Stdin = strings.NewReader(params.Stdin)
+	}
 	stdout, err := cmd.StdoutPipe()
 	defer func() { _ = stdout.Close() }()
 	if err != nil {

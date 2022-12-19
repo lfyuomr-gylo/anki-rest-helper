@@ -7,6 +7,7 @@ import (
 	"anki-rest-enhancer/ratelimit"
 	"anki-rest-enhancer/util/execx"
 	"anki-rest-enhancer/util/iox"
+	"anki-rest-enhancer/util/lang"
 	"anki-rest-enhancer/util/stringx"
 	"anki-rest-enhancer/util/templatex"
 	"context"
@@ -382,16 +383,38 @@ func (h Helper) applyProcessingRule(ctx context.Context, rule ankihelperconf.Not
 		idx++
 		throttler.Throttle()
 
-		fieldUpdate, err := h.processNote(ctx, rule, note, idx, len(notes))
+		err := h.processNote(ctx, rule, note, idx, len(notes))
 		if err != nil {
-			log.Printf("Skip failed note %d processing, error: %s", noteID, err)
+			log.Printf("Failed to process note %d, error: %s", noteID, err)
 			continue
-		}
-		if err := h.ankiConnect.UpdateNoteFields(noteID, fieldUpdate); err != nil {
-			return err
 		}
 	}
 
+	return nil
+}
+
+type noteProcessingModification struct {
+	// oneof
+	SetField           *map[string]string `json:"set_field"`
+	SetFieldIfNotEmpty *map[string]string `json:"set_field_if_not_empty"`
+	AddTag             *string            `json:"add_tag"`
+}
+
+func (m noteProcessingModification) Validate() error {
+	fieldsSet := 0
+	if m.SetField != nil {
+		fieldsSet++
+	}
+	if m.AddTag != nil {
+		fieldsSet++
+	}
+	if m.SetFieldIfNotEmpty != nil {
+		fieldsSet++
+	}
+
+	if fieldsSet != 1 {
+		return errorx.IllegalFormat.New("invalid note modification command has %d top-level keys instead of one: %+v", fieldsSet, m)
+	}
 	return nil
 }
 
@@ -400,7 +423,7 @@ func (h Helper) processNote(
 	rule ankihelperconf.NoteProcessingRule,
 	note ankiconnect.NoteInfo,
 	noteIdx, totalNotes int,
-) (map[string]ankiconnect.FieldUpdate, error) {
+) error {
 	templateContext := map[string]any{
 		"Note": map[string]any{
 			"Fields": note.Fields,
@@ -415,10 +438,22 @@ func (h Helper) processNote(
 		case arg.Template != nil:
 			var argBuilder strings.Builder
 			if err := arg.Template.Execute(&argBuilder, templateContext); err != nil {
-				return nil, errorx.IllegalFormat.Wrap(err, "failed to substitute template in argument #%d", i)
+				return errorx.IllegalFormat.Wrap(err, "failed to substitute template in argument #%d", i)
 			}
 			args[i] = argBuilder.String()
 		}
+	}
+
+	var stdin string
+	switch {
+	case rule.Exec.Stdin.PlainString != nil:
+		stdin = *rule.Exec.Stdin.PlainString
+	case rule.Exec.Stdin.Template != nil:
+		var stdinBuilder strings.Builder
+		if err := rule.Exec.Stdin.Template.Execute(&stdinBuilder, templateContext); err != nil {
+			return errorx.IllegalFormat.Wrap(err, "failed to substitute template in stdin of the script")
+		}
+		stdin = stdinBuilder.String()
 	}
 
 	cmdCtx := ctx
@@ -429,24 +464,57 @@ func (h Helper) processNote(
 		cmdCtx = ctx
 	}
 	log.Printf("Executing note processing command [%d/%d]: %s %s", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, " "))
-	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, rule.Exec.Command, args...)
+	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, execx.Params{
+		Command: rule.Exec.Command,
+		Args:    args,
+		Stdin:   stdin,
+	})
 	if err != nil {
-		return nil, errorx.ExternalError.Wrap(err, "Note population command failed")
+		return errorx.ExternalError.Wrap(err, "Note population command failed")
 	}
 
-	var commandOutParsed map[string]string
+	var commandOutParsed []noteProcessingModification
 	if !stringx.IsBlank(string(cmdOut)) {
 		if err := json.Unmarshal(cmdOut, &commandOutParsed); err != nil {
-			return nil, errorx.ExternalError.Wrap(err, "Note processing command's stdout is malformed")
+			return errorx.ExternalError.Wrap(err, "Note processing command's stdout is malformed")
+		}
+		for idx, modification := range commandOutParsed {
+			if err := modification.Validate(); err != nil {
+				return errorx.Decorate(err, "Note processing command's stdout contains malformed modification #%d", idx)
+			}
 		}
 	}
 
-	fieldValues := make(map[string]ankiconnect.FieldUpdate, len(commandOutParsed))
-	for field, value := range commandOutParsed {
-		if rule.OverwriteNonEmptyFields || note.Fields[field] == "" {
-			fieldValues[field] = ankiconnect.FieldUpdate{Value: value}
+	fieldUpdates := make(map[string]ankiconnect.FieldUpdate)
+	var tagsToAdd []string
+	for _, modification := range commandOutParsed {
+		switch {
+		case modification.SetField != nil:
+			for field, value := range *modification.SetField {
+				fieldUpdates[field] = ankiconnect.FieldUpdate{Value: lang.New(value)}
+			}
+		case modification.SetFieldIfNotEmpty != nil:
+			for field, value := range *modification.SetFieldIfNotEmpty {
+				if note.Fields[field] == "" {
+					fieldUpdates[field] = ankiconnect.FieldUpdate{Value: lang.New(value)}
+				}
+			}
+		case modification.AddTag != nil:
+			tagsToAdd = append(tagsToAdd, *modification.AddTag)
+		default:
+			panic(errorx.IllegalState.New("Unexpected modification: %+v", modification))
 		}
 	}
 
-	return fieldValues, nil
+	if len(fieldUpdates) > 0 {
+		if err := h.ankiConnect.UpdateNoteFields(note.ID, fieldUpdates); err != nil {
+			return err
+		}
+	}
+	if len(tagsToAdd) > 0 {
+		if err := h.ankiConnect.AddTags([]ankiconnect.NoteID{note.ID}, tagsToAdd); err != nil {
+			return err
+		}
+	}
+	return nil
 }

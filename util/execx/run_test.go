@@ -23,7 +23,7 @@ func TestRunAndCollectOutput_Timeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	start := time.Now()
-	_, err := RunAndCollectOutput(ctx, "bash", scriptFileName)
+	_, err := RunAndCollectOutput(ctx, Params{Command: "bash", Args: []string{scriptFileName}})
 	duration := time.Now().Sub(start)
 	require.Error(t, err)
 	require.True(t, duration < 2*timeout)
@@ -31,7 +31,10 @@ func TestRunAndCollectOutput_Timeout(t *testing.T) {
 
 func TestRunAndCollectOutput_Success(t *testing.T) {
 	// when:
-	output, err := RunAndCollectOutput(context.Background(), "echo", "foo")
+	output, err := RunAndCollectOutput(context.Background(), Params{
+		Command: "echo",
+		Args:    []string{"foo"},
+	})
 
 	// then:
 	require.NoError(t, err)

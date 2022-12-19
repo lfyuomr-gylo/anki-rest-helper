@@ -8,7 +8,7 @@ type CardID int64
 
 type FieldUpdate struct {
 	// one of
-	Value     string
+	Value     *string
 	AudioData []byte
 }
 
@@ -35,4 +35,5 @@ type API interface {
 	CreateModel(params CreateModelParams) error
 	ChangeDeck(deckName string, noteIDs []CardID) error
 	StoreMediaFile(fileName string, fileData io.Reader, replaceExisting bool) error
+	AddTags(noteIDs []NoteID, tags []string) error
 }

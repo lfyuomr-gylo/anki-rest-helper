@@ -145,3 +145,17 @@ type storeMediaFileParams struct {
 }
 
 type storeMediaFileResult string
+
+//goland:noinspection GoUnusedGlobalVariable
+var actionAddTags = declareAction("addTags", addTagsParams{}, addTagsResult{})
+
+type addTagsParams struct {
+	Notes []NoteID `json:"notes"`
+	// Tags is a space-separated list of tags, as per
+	// https://github.com/FooSoft/anki-connect/blob/42a6de39b317a9471e4ad430e13e0f6a5d0d5d58/plugin/__init__.py#L799
+	Tags string `json:"tags"`
+}
+
+type addTagsResult struct {
+	// nop
+}
