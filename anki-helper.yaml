@@ -215,6 +215,95 @@ actions:
          color: blue;
         }
 
+    - name: SpanishGenderDependent
+      fields:
+        - name: Explanation
+          skipVoiceover: true
+        - name: Synonyms
+          skipVoiceover: true
+        - name: Male
+          vars:
+            gender: masculino
+            number: singular
+        - name: Female
+          vars:
+            gender: femenino
+            number: singular
+        - name: PluralMale
+          vars:
+            gender: masculino
+            number: plural
+        - name: PluralFemale
+          vars:
+            gender: femenino
+            number: plural
+      templates:
+        - name: "FillIn$$.Field$$"
+          forFields:
+            - Male
+            - Female
+            - PluralMale
+            - PluralFemale
+          front: |
+            <div>Adjetivo/nacionalidad/ocupación/etc.</div>
+            <div>
+              <span class="$$.Vars.gender$$">$$.Vars.gender$$</span>
+              <span class="$$.Vars.number$$">$$.Vars.number$$</span>
+            </div>
+
+            {{Explanation}}
+            
+            {{#Synonyms}}
+              <div>
+                Sinónimos: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+
+            {{type:$$.Field$$}}
+          back: |
+            <div>Adjetivo/nacionalidad/ocupación/etc.</div>
+            <div>
+              <span class="$$.Vars.gender$$">$$.Vars.gender$$</span>
+              <span class="$$.Vars.number$$">$$.Vars.number$$</span>
+            </div>
+
+            {{Explanation}} {{$$.FieldVoiceover$$}} 
+
+            {{#Synonyms}}
+              <div>
+                Sinónimos: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+
+            <hr id="answer">
+
+            {{type:$$.Field$$}}
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+
+        .masculino {
+        	font-weight: bold;
+          color: blue;
+        }
+
+        .femenino {
+        	font-weight: bold;
+          color: hotpink;
+        }
+
+        .singular {
+          font-style: italic;
+        }
+
+        .plural {
+          font-weight: bold;
+        }
   noteProcessing:
     - noteFilter: |
         (IndicativePresentYo:- -tag:conjugation_skip:IndicativePresentYo)
