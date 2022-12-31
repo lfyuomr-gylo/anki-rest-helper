@@ -4,7 +4,6 @@ import sys
 import json
 
 note = json.load(sys.stdin)
-print(f"Loaded note: {note}", file=sys.stderr)
 
 modifications = []
 for field, value in note.items():
