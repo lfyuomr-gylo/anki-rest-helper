@@ -32,6 +32,14 @@ actions:
           replacement: ''
         - regexp: '\}\}'
           replacement: ''
+    - forGeneratedNoteType: SpanishGenderDependent
+      textPreprocessing:
+        - regexp: '\s+'
+          replacement: ' '
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
     - textField: Word
       audioField: WordVoiceover
       textPreprocessing:
@@ -63,14 +71,6 @@ actions:
           replacement: ''
         - regexp: '\s+'
           replacement: ' '
-    - textField: Male
-      audioField: MaleVoiceover
-    - textField: Female
-      audioField: FemaleVoiceover
-    - textField: PluralMale
-      audioField: PluralMaleVoiceover
-    - textField: PluralFemale
-      audioField: PluralFemaleVoiceover
   noteTypes:
     - name: SpanishVerb
       fields:
@@ -225,18 +225,22 @@ actions:
           vars:
             gender: masculino
             number: singular
+        - name: MaleExample
         - name: Female
           vars:
             gender: femenino
             number: singular
+        - name: FemaleExample
         - name: PluralMale
           vars:
             gender: masculino
             number: plural
+        - name: PluralMaleExample
         - name: PluralFemale
           vars:
             gender: femenino
             number: plural
+        - name: PluralFemaleExample
       templates:
         - name: "FillIn$$.Field$$"
           forFields:
@@ -255,11 +259,37 @@ actions:
             
             {{#Synonyms}}
               <div>
-                Sinónimos: {{Synonyms}}
+                <br>Sinónimos: {{Synonyms}}
               </div>
             {{/Synonyms}}
+            
+            {{#$$.Field$$Example}}
+              <div>
+                <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+              </div>
+            {{/$$.Field$$Example}}
 
             {{type:$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
           back: |
             <div>Adjetivo/nacionalidad/ocupación/etc.</div>
             <div>
@@ -271,13 +301,44 @@ actions:
 
             {{#Synonyms}}
               <div>
-                Sinónimos: {{Synonyms}}
+                <br>Sinónimos: {{Synonyms}}
               </div>
             {{/Synonyms}}
+            
+            {{#$$.Field$$Example}}
+              <div>
+                <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span> {{$$.Field$$ExampleVoiceover}} 
+              </div>
+            {{/$$.Field$$Example}}
 
             <hr id="answer">
 
             {{type:$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
       css: |
         .card {
           font-family: arial;
@@ -286,6 +347,11 @@ actions:
           color: black;
           background-color: white;
         }
+  
+        .cloze {
+          font-weight: bold;
+          color: blue;
+        }        
 
         .masculino {
         	font-weight: bold;
