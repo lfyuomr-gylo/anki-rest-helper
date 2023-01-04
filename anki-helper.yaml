@@ -380,13 +380,6 @@ actions:
         OR (IndicativePresentEllos:- -tag:conjugation_skip:IndicativePresentEllos)
         OR (ImperativeAffirmativeTu:- -tag:conjugation_skip:ImperativeAffirmativeTu)
         OR (ImperativeAffirmativeUsted:- -tag:conjugation_skip:ImperativeAffirmativeUsted)
-      # Execute specified command with specified arguments
-      # and read values of note fields from its stdout.
-      # Command should print a JSON array of modification commands.
-      # Supported commands:
-      # {"set_field": {"field": "value"}}
-      # {"add_tag": "tag"}
-      # {"set_field_if_not_empty": {"field": "value"}}
       exec:
         command: ./disable_skipped_conjugation.py
         stdin: "$$ .Note.Fields | to_json $$"
