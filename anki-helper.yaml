@@ -405,8 +405,20 @@ actions:
         OR (ImperativeAffirmativeTu:- -tag:conjugation_skip:ImperativeAffirmativeTu)
         OR (ImperativeAffirmativeUsted:- -tag:conjugation_skip:ImperativeAffirmativeUsted)
       exec:
-        command: ./disable_skipped_conjugation.py
+        command: ./scripts/disable_skipped_conjugation.py
         stdin: "$$ .Note.Fields | to_json $$"
+    # Swap back 'Word' and 'Explanation' field in verb notes
+    # where they are accidentally mixed up.
+    - noteFilter: note:SpanishVerb Word:[eng]_*
+      exec:
+        command: ./scripts/set_fields.py
+        args:
+          - Word
+          - $$.Note.Fields.Explanation$$
+          - Explanation
+          - $$.Note.Fields.Word$$
+          - WordVoiceover
+          - ""
     # only process notes that have at least one of the conjugation fields empty
     - noteFilter: |
         (IndicativePresentYo: -tag:conjugation_skip:IndicativePresentYo)
@@ -418,7 +430,7 @@ actions:
         OR (ImperativeAffirmativeTu: -tag:conjugation_skip:ImperativeAffirmativeTu)
         OR (ImperativeAffirmativeUsted: -tag:conjugation_skip:ImperativeAffirmativeUsted)
       exec:
-        command: ./conjugate-spanish-verb.sh
+        command: ./scripts/conjugate-spanish-verb.sh
         args:
           - "$$.Note.Fields.Word$$"
       minPauseBetweenExecutions: 1200ms
