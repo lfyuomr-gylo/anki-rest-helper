@@ -88,35 +88,43 @@ actions:
           vars:
             pronoun: yo
             tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentYoExample
         - name: IndicativePresentTu
           vars:
             pronoun: tú
             tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentTuExample
         - name: IndicativePresentEl
           vars:
             pronoun: él/ella/usted
             tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentElExample
         - name: IndicativePresentNosotros
           vars:
             pronoun: nosotros
             tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentNosotrosExample
         - name: IndicativePresentVosotros
           vars:
             pronoun: vosotros
             tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentVosotrosExample
         - name: IndicativePresentEllos
           vars:
             pronoun: ellos/ellas/ustedes
             tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentEllosExample
 
         - name: ImperativeAffirmativeTu
           vars:
             pronoun: tú
             tense: _spanish-tense-imperative.jpeg
+        - name: ImperativeAffirmativeTuExample
         - name: ImperativeAffirmativeUsted
           vars:
             pronoun: usted
             tense: _spanish-tense-imperative.jpeg
+        - name: ImperativeAffirmativeUstedExample
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -141,6 +149,14 @@ actions:
             <img src="$$.Vars.tense$$"><br><br>
             <i>{{text:Explanation}}</i><br>
             <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+
+            $$ if ne .Field "Word"$$
+              {{#$$.Field$$Example}}
+                <div>
+                  <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+                </div>
+              {{/$$.Field$$Example}}
+            $$ end $$
 
             {{type::$$.Field$$}}
 
@@ -167,6 +183,14 @@ actions:
             <img src="$$.Vars.tense$$"><br><br>
             <i>{{text:Explanation}}</i><br>
             <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
+
+            $$ if ne .Field "Word"$$
+              {{#$$.Field$$Example}}
+                <div>
+                  <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+                </div>
+              {{/$$.Field$$Example}}
+            $$ end $$
 
             <hr id=answer>
             {{type::$$.Field$$}}
