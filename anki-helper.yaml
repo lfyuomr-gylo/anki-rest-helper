@@ -279,17 +279,18 @@ actions:
               <span class="$$.Vars.number$$">$$.Vars.number$$</span>
             </div>
 
+            <br>
             {{Explanation}}
             
             {{#Synonyms}}
               <div>
-                <br>Sinónimos: {{Synonyms}}
+                Sinónimos: {{Synonyms}}
               </div>
             {{/Synonyms}}
             
             {{#$$.Field$$Example}}
               <div>
-                <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+                Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
               </div>
             {{/$$.Field$$Example}}
 
