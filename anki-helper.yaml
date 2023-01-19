@@ -436,6 +436,15 @@ actions:
           - "$$.Note.Fields.Word$$"
       minPauseBetweenExecutions: 1200ms
       timeout: 5s
+    # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
+    - noteFilter: Image:_* -tag:image_resized
+      exec:
+        command: ./scripts/resize_image.py
+        args:
+          - Image
+          - $$.Note.Fields.Image$$
+          - 200
+          - image_resized
   cardsOrganization:
     - filter: -note:SpanishVerb*
       targetDeck: Spanish::Other
