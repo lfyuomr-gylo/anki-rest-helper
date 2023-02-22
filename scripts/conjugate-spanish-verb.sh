@@ -15,5 +15,12 @@ sd-conjugate $WORD | jq '[
     {set_field_if_not_empty: {IndicativePresentEllos:     .[] | select(.pronoun == "ellos/ellas/Uds.") | select(.paradigm == "presentIndicative").word}},
 
     {set_field_if_not_empty: {ImperativeAffirmativeTu:    .[] | select(.pronoun == "tú")  | select(.paradigm == "imperative") | select(.tense == "affirmative").word}},
-    {set_field_if_not_empty: {ImperativeAffirmativeUsted: .[] | select(.pronoun == "Ud.") | select(.paradigm == "imperative") | select(.tense == "affirmative").word}}
+    {set_field_if_not_empty: {ImperativeAffirmativeUsted: .[] | select(.pronoun == "Ud.") | select(.paradigm == "imperative") | select(.tense == "affirmative").word}},
+
+    {set_field_if_not_empty: {PreteriteYo:        .[] | select(.pronoun == "yo") | select(.paradigm == "preteritIndicative").word}},
+    {set_field_if_not_empty: {PreteriteTu:        .[] | select(.pronoun == "tú") | select(.paradigm == "preteritIndicative").word}},
+    {set_field_if_not_empty: {PreteriteEl:        .[] | select(.pronoun == "él/ella/Ud.") | select(.paradigm == "preteritIndicative").word}},
+    {set_field_if_not_empty: {PreteriteNosotros:  .[] | select(.pronoun == "nosotros") | select(.paradigm == "preteritIndicative").word}},
+    {set_field_if_not_empty: {PreteriteVosotros:  .[] | select(.pronoun == "vosotros") | select(.paradigm == "preteritIndicative").word}},
+    {set_field_if_not_empty: {PreteriteEllos:     .[] | select(.pronoun == "ellos/ellas/Uds.") | select(.paradigm == "preteritIndicative").word}}
 ]'

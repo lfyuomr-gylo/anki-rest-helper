@@ -23,6 +23,8 @@ actions:
       path: media/spanish-tenses/spanish-tense-imperative.jpeg
     - ankiName: _spanish-tense-present.jpeg
       path: media/spanish-tenses/spanish-tense-present.jpeg
+    - ankiName: _spanish-tense-preterite.jpeg
+      path: media/spanish-tenses/spanish-tense-preterite.jpeg
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
@@ -125,6 +127,38 @@ actions:
             pronoun: usted
             tense: _spanish-tense-imperative.jpeg
         - name: ImperativeAffirmativeUstedExample
+
+        - name: PreteriteYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteYoExample
+        - name: PreteriteTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteTuExample
+        - name: PreteriteEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteElExample
+        - name: PreteriteNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteNosotrosExample
+        - name: PreteriteVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteVosotrosExample
+        - name: PreteriteEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteEllosExample
+
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -145,6 +179,12 @@ actions:
             - IndicativePresentEllos
             - ImperativeAffirmativeTu
             - ImperativeAffirmativeUsted
+            - PreteriteYo
+            - PreteriteTu
+            - PreteriteEl
+            - PreteriteNosotros
+            - PreteriteVosotros
+            - PreteriteEllos
           front: |
             <img src="$$.Vars.tense$$"><br><br>
             <i>{{text:Explanation}}</i><br>
@@ -405,6 +445,12 @@ actions:
         OR (IndicativePresentEllos:- -tag:conjugation_skip:IndicativePresentEllos)
         OR (ImperativeAffirmativeTu:- -tag:conjugation_skip:ImperativeAffirmativeTu)
         OR (ImperativeAffirmativeUsted:- -tag:conjugation_skip:ImperativeAffirmativeUsted)
+        OR (PreteriteYo:- -tag:conjugation_skip:PreteriteYo)
+        OR (PreteriteTu:- -tag:conjugation_skip:PreteriteTu)
+        OR (PreteriteEl:- -tag:conjugation_skip:PreteriteEl)
+        OR (PreteriteNosotros:- -tag:conjugation_skip:PreteriteNosotros)
+        OR (PreteriteVosotros:- -tag:conjugation_skip:PreteriteVosotros)
+        OR (PreteriteEllos:- -tag:conjugation_skip:PreteriteEllos)
       exec:
         command: ./scripts/disable_skipped_conjugation.py
         stdin: "$$ .Note.Fields | to_json $$"
@@ -430,6 +476,12 @@ actions:
         OR (IndicativePresentEllos: -tag:conjugation_skip:IndicativePresentEllos)
         OR (ImperativeAffirmativeTu: -tag:conjugation_skip:ImperativeAffirmativeTu)
         OR (ImperativeAffirmativeUsted: -tag:conjugation_skip:ImperativeAffirmativeUsted)
+        OR (PreteriteYo: -tag:conjugation_skip:PreteriteYo)
+        OR (PreteriteTu: -tag:conjugation_skip:PreteriteTu)
+        OR (PreteriteEl: -tag:conjugation_skip:PreteriteEl)
+        OR (PreteriteNosotros: -tag:conjugation_skip:PreteriteNosotros)
+        OR (PreteriteVosotros: -tag:conjugation_skip:PreteriteVosotros)
+        OR (PreteriteEllos: -tag:conjugation_skip:PreteriteEllos)
       exec:
         command: ./scripts/conjugate-spanish-verb.sh
         args:
