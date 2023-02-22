@@ -58,6 +58,7 @@ func (api api) FindCards(query string) ([]CardID, error) {
 type NoteInfo struct {
 	ID     NoteID
 	Fields map[string]string
+	Tags   []string
 }
 
 func (api api) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
@@ -80,6 +81,7 @@ func (api api) NotesInfo(noteIDs []NoteID) (map[NoteID]NoteInfo, error) {
 		for name, value := range noteInfo.Fields {
 			note.Fields[name] = value.Value
 		}
+		note.Tags = noteInfo.Tags
 		notes[noteInfo.NoteID] = note
 	}
 	return notes, nil

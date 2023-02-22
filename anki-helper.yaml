@@ -483,9 +483,10 @@ actions:
         OR (PreteriteVosotros: -tag:conjugation_skip:PreteriteVosotros)
         OR (PreteriteEllos: -tag:conjugation_skip:PreteriteEllos)
       exec:
-        command: ./scripts/conjugate-spanish-verb.sh
+        command: ./scripts/conjugate_spanish_verb.py
         args:
           - "$$.Note.Fields.Word$$"
+          - "$$.Note.Tags | to_json $$"
       minPauseBetweenExecutions: 1200ms
       timeout: 5s
     # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.

@@ -427,6 +427,7 @@ func (h Helper) processNote(
 	templateContext := map[string]any{
 		"Note": map[string]any{
 			"Fields": note.Fields,
+			"Tags":   note.Tags,
 		},
 	}
 
