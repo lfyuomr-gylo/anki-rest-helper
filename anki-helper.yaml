@@ -500,6 +500,8 @@ actions:
           - image_resized
   cardsOrganization:
     - filter: -note:SpanishVerb*
-      targetDeck: Spanish::Other
-    - filter: note:SpanishVerb*
-      targetDeck: Spanish::Verbs
+      targetDeck: Spanish::00_Other
+    - filter: note:SpanishVerb* card:FillInWord*
+      targetDeck: Spanish::01_VerbsInfinitive
+    - filter: note:SpanishVerb* -card:FillInWord*
+      targetDeck: Spanish::02_VerbsConjugation
