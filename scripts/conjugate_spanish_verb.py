@@ -4,7 +4,7 @@
   Spanish verb conjugation script.
 
   This script accepts spanish verb and a list of Anki note tags, and produces note modification commands
-  that fill out the note with verb conjugation. Field X is not populated if the note has a tag "conjugation_skip:X".
+  that fill out the note with verb conjugation. Field X is not populated if the note has a tag "conjugation_done:X".
 
   CLI arguments:
     1. verb in infinitive form
@@ -29,7 +29,7 @@ class ConjugationRule:
   sd_tense: str = None
 
   def produce_note_modifications(self, sd_conjugation, note_tags):
-    if self._skip_tag() in note_tags or self._done_tag() in note_tags:
+    if note_tags or self._done_tag() in note_tags:
       print(f"conjugation is skipped for field {self.note_field} via tag", file=sys.stderr)
       return []
 
@@ -53,9 +53,6 @@ class ConjugationRule:
 
   def _done_tag(self):
     return f"conjugation_done:{self.note_field}"
-
-  def _skip_tag(self):
-    return f"conjugation_skip:{self.note_field}"
 
   def _matches(self, sd_conj):
     if self.sd_pronoun is not None and self.sd_pronoun != sd_conj.get('pronoun', ''):
