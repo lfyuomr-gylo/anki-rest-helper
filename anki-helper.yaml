@@ -25,6 +25,8 @@ actions:
       path: media/spanish-tenses/spanish-tense-present.jpeg
     - ankiName: _spanish-tense-preterite.jpeg
       path: media/spanish-tenses/spanish-tense-preterite.jpeg
+    - ankiName: _spanish-tense-imperfect.jpeg
+      path: media/spanish-tenses/spanish-tense-imperfect.jpeg
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
@@ -159,6 +161,37 @@ actions:
             tense: _spanish-tense-preterite.jpeg
         - name: PreteriteEllosExample
 
+        - name: ImperfectYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectYoExample
+        - name: ImperfectTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectTuExample
+        - name: ImperfectEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectElExample
+        - name: ImperfectNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectNosotrosExample
+        - name: ImperfectVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectVosotrosExample
+        - name: ImperfectEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectEllosExample
+
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -185,6 +218,12 @@ actions:
             - PreteriteNosotros
             - PreteriteVosotros
             - PreteriteEllos
+            - ImperfectYo
+            - ImperfectTu
+            - ImperfectEl
+            - ImperfectNosotros
+            - ImperfectVosotros
+            - ImperfectEllos
           front: |
             <img src="$$.Vars.tense$$"><br><br>
             <i>{{text:Explanation}}</i><br>
@@ -464,6 +503,12 @@ actions:
         OR (PreteriteNosotros: -tag:conjugation_done:PreteriteNosotros)
         OR (PreteriteVosotros: -tag:conjugation_done:PreteriteVosotros)
         OR (PreteriteEllos: -tag:conjugation_done:PreteriteEllos)
+        OR (ImperfectYo: -tag:conjugation_done:ImperfectYo)
+        OR (ImperfectTu: -tag:conjugation_done:ImperfectTu)
+        OR (ImperfectEl: -tag:conjugation_done:ImperfectEl)
+        OR (ImperfectNosotros: -tag:conjugation_done:ImperfectNosotros)
+        OR (ImperfectVosotros: -tag:conjugation_done:ImperfectVosotros)
+        OR (ImperfectEllos: -tag:conjugation_done:ImperfectEllos)
       exec:
         command: ./scripts/conjugate_spanish_verb.py
         args:

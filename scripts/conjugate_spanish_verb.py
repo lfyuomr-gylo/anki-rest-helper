@@ -29,7 +29,7 @@ class ConjugationRule:
   sd_tense: str = None
 
   def produce_note_modifications(self, sd_conjugation, note_tags):
-    if note_tags or self._done_tag() in note_tags:
+    if self._done_tag() in note_tags:
       print(f"conjugation is skipped for field {self.note_field} via tag", file=sys.stderr)
       return []
 
@@ -82,6 +82,13 @@ RULES = [
       ConjugationRule(note_field="PreteriteNosotros",          prob=0.05, sd_pronoun="nosotros",         sd_paradigm="preteritIndicative"),
       ConjugationRule(note_field="PreteriteVosotros",          prob=0.05, sd_pronoun="vosotros",         sd_paradigm="preteritIndicative"),
       ConjugationRule(note_field="PreteriteEllos",             prob=0.20, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="preteritIndicative"),
+
+      ConjugationRule(note_field="ImperfectYo",                prob=0.15, sd_pronoun="yo",               sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="ImperfectTu",                prob=0.20, sd_pronoun="tú",               sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="ImperfectEl",                prob=0.15, sd_pronoun="él/ella/Ud.",      sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="ImperfectNosotros",          prob=0.15, sd_pronoun="nosotros",         sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="ImperfectVosotros",          prob=0.15, sd_pronoun="vosotros",         sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="ImperfectEllos",             prob=0.20, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="preteritIndicative"),
 ]
 
 if __name__ == '__main__':
