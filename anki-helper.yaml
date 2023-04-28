@@ -468,20 +468,20 @@ actions:
           - ""
     # only process notes that have at least one of the conjugation fields empty
     - noteFilter: |
-        (IndicativePresentYo: -tag:conjugation_skip:IndicativePresentYo)
-        OR (IndicativePresentTu: -tag:conjugation_skip:IndicativePresentTu)
-        OR (IndicativePresentEl: -tag:conjugation_skip:IndicativePresentEl)
-        OR (IndicativePresentNosotros: -tag:conjugation_skip:IndicativePresentNosotros)
-        OR (IndicativePresentVosotros: -tag:conjugation_skip:IndicativePresentVosotros)
-        OR (IndicativePresentEllos: -tag:conjugation_skip:IndicativePresentEllos)
-        OR (ImperativeAffirmativeTu: -tag:conjugation_skip:ImperativeAffirmativeTu)
-        OR (ImperativeAffirmativeUsted: -tag:conjugation_skip:ImperativeAffirmativeUsted)
-        OR (PreteriteYo: -tag:conjugation_skip:PreteriteYo)
-        OR (PreteriteTu: -tag:conjugation_skip:PreteriteTu)
-        OR (PreteriteEl: -tag:conjugation_skip:PreteriteEl)
-        OR (PreteriteNosotros: -tag:conjugation_skip:PreteriteNosotros)
-        OR (PreteriteVosotros: -tag:conjugation_skip:PreteriteVosotros)
-        OR (PreteriteEllos: -tag:conjugation_skip:PreteriteEllos)
+        (IndicativePresentYo: -tag:conjugation_skip:IndicativePresentYo -tag:conjugation_done:IndicativePresentYo)
+        OR (IndicativePresentTu: -tag:conjugation_skip:IndicativePresentTu -tag:conjugation_done:IndicativePresentTu)
+        OR (IndicativePresentEl: -tag:conjugation_skip:IndicativePresentEl -tag:conjugation_done:IndicativePresentEl)
+        OR (IndicativePresentNosotros: -tag:conjugation_skip:IndicativePresentNosotros -tag:conjugation_done:IndicativePresentNosotros)
+        OR (IndicativePresentVosotros: -tag:conjugation_skip:IndicativePresentVosotros -tag:conjugation_done:IndicativePresentVosotros)
+        OR (IndicativePresentEllos: -tag:conjugation_skip:IndicativePresentEllos -tag:conjugation_done:IndicativePresentEllos)
+        OR (ImperativeAffirmativeTu: -tag:conjugation_skip:ImperativeAffirmativeTu -tag:conjugation_done:ImperativeAffirmativeTu)
+        OR (ImperativeAffirmativeUsted: -tag:conjugation_skip:ImperativeAffirmativeUsted -tag:conjugation_done:ImperativeAffirmativeUsted)
+        OR (PreteriteYo: -tag:conjugation_skip:PreteriteYo -tag:conjugation_done:PreteriteYo)
+        OR (PreteriteTu: -tag:conjugation_skip:PreteriteTu -tag:conjugation_done:PreteriteTu)
+        OR (PreteriteEl: -tag:conjugation_skip:PreteriteEl -tag:conjugation_done:PreteriteEl)
+        OR (PreteriteNosotros: -tag:conjugation_skip:PreteriteNosotros -tag:conjugation_done:PreteriteNosotros)
+        OR (PreteriteVosotros: -tag:conjugation_skip:PreteriteVosotros -tag:conjugation_done:PreteriteVosotros)
+        OR (PreteriteEllos: -tag:conjugation_skip:PreteriteEllos -tag:conjugation_done:PreteriteEllos)
       exec:
         command: ./scripts/conjugate_spanish_verb.py
         args:

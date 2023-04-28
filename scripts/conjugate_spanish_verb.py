@@ -18,23 +18,44 @@ from dataclasses import dataclass
 import json
 import subprocess
 import sys
+import random
 
 @dataclass
 class ConjugationRule:
   note_field: str
+  prob: float # number in range [0; 1]; probability of the conjugation card generation for regular verbs
   sd_pronoun: str
   sd_paradigm: str
   sd_tense: str = None
 
-  def produce_note_modification(self, sd_conjugation, note_tags):
-    skip_tag = f"conjugation_skip:{self.note_field}"
-    if skip_tag in note_tags:
-      return None
+  def produce_note_modifications(self, sd_conjugation, note_tags):
+    if self._skip_tag() in note_tags or self._done_tag() in note_tags:
+      print(f"conjugation is skipped for field {self.note_field} via tag", file=sys.stderr)
+      return []
 
     for conj in sd_conjugation:
       if self._matches(conj):
-        return {'set_field_if_not_empty': {self.note_field: conj.get('word', '')}}
-    return None
+        modifications = [{'add_tag': self._done_tag()}]
+
+        prob = self.prob
+        if conj.get('isIrregular', 'False'):
+          # we always generate conjugation card if the conjugation form is irregular
+          prob = 1
+        if random.random() < prob:
+          modifications.append({
+            'set_field_if_not_empty': {self.note_field: conj.get('word', '')}
+          })
+        else:
+          print(f"do not generate regular conjugation card for field {self.note_field} (prob={prob})", file=sys.stderr)
+
+        return modifications
+    return []
+
+  def _done_tag(self):
+    return f"conjugation_done:{self.note_field}"
+
+  def _skip_tag(self):
+    return f"conjugation_skip:{self.note_field}"
 
   def _matches(self, sd_conj):
     if self.sd_pronoun is not None and self.sd_pronoun != sd_conj.get('pronoun', ''):
@@ -48,22 +69,22 @@ class ConjugationRule:
 
 RULES = [
       # Anki field |
-      ConjugationRule(note_field="IndicativePresentYo",       sd_pronoun="yo",               sd_paradigm="presentIndicative"),
-      ConjugationRule(note_field="IndicativePresentTu",       sd_pronoun="tú",               sd_paradigm="presentIndicative"),
-      ConjugationRule(note_field="IndicativePresentEl",       sd_pronoun="él/ella/Ud.",      sd_paradigm="presentIndicative"),
-      ConjugationRule(note_field="IndicativePresentNosotros", sd_pronoun="nosotros",         sd_paradigm="presentIndicative"),
-      ConjugationRule(note_field="IndicativePresentVosotros", sd_pronoun="vosotros",         sd_paradigm="presentIndicative"),
-      ConjugationRule(note_field="IndicativePresentEllos",    sd_pronoun="ellos/ellas/Uds.", sd_paradigm="presentIndicative"),
+      ConjugationRule(note_field="IndicativePresentYo",        prob=0.05, sd_pronoun="yo",               sd_paradigm="presentIndicative"),
+      ConjugationRule(note_field="IndicativePresentTu",        prob=0.30, sd_pronoun="tú",               sd_paradigm="presentIndicative"),
+      ConjugationRule(note_field="IndicativePresentEl",        prob=0.30, sd_pronoun="él/ella/Ud.",      sd_paradigm="presentIndicative"),
+      ConjugationRule(note_field="IndicativePresentNosotros",  prob=0.10, sd_pronoun="nosotros",         sd_paradigm="presentIndicative"),
+      ConjugationRule(note_field="IndicativePresentVosotros",  prob=0.10, sd_pronoun="vosotros",         sd_paradigm="presentIndicative"),
+      ConjugationRule(note_field="IndicativePresentEllos",     prob=0.15, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="presentIndicative"),
 
-      ConjugationRule(note_field="ImperativeAffirmativeTu",    sd_pronoun="tú",  sd_paradigm="imperative", sd_tense="affirmative"),
-      ConjugationRule(note_field="ImperativeAffirmativeUsted", sd_pronoun="Ud.", sd_paradigm="imperative", sd_tense="affirmative"),
+      ConjugationRule(note_field="ImperativeAffirmativeTu",    prob=0.10, sd_pronoun="tú",               sd_paradigm="imperative", sd_tense="affirmative"),
+      ConjugationRule(note_field="ImperativeAffirmativeUsted", prob=0.10, sd_pronoun="Ud.",              sd_paradigm="imperative", sd_tense="affirmative"),
 
-      ConjugationRule(note_field="PreteriteYo",       sd_pronoun="yo",               sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="PreteriteTu",       sd_pronoun="tú",               sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="PreteriteEl",       sd_pronoun="él/ella/Ud.",      sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="PreteriteNosotros", sd_pronoun="nosotros",         sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="PreteriteVosotros", sd_pronoun="vosotros",         sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="PreteriteEllos",    sd_pronoun="ellos/ellas/Uds.", sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="PreteriteYo",                prob=0.30, sd_pronoun="yo",               sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="PreteriteTu",                prob=0.10, sd_pronoun="tú",               sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="PreteriteEl",                prob=0.30, sd_pronoun="él/ella/Ud.",      sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="PreteriteNosotros",          prob=0.05, sd_pronoun="nosotros",         sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="PreteriteVosotros",          prob=0.05, sd_pronoun="vosotros",         sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="PreteriteEllos",             prob=0.20, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="preteritIndicative"),
 ]
 
 if __name__ == '__main__':
@@ -77,8 +98,8 @@ if __name__ == '__main__':
 
   commands = []
   for rule in RULES:
-    command = rule.produce_note_modification(sd_conjugation, note_tags)
-    if command is not None:
-      commands.append(command)
+    rule_commands = rule.produce_note_modifications(sd_conjugation, note_tags)
+    if len(rule_commands) > 0:
+      commands.extend(rule_commands)
 
-  json.dump(commands, sys.stdout)
+  json.dump(commands, sys.stdout, indent=2)
