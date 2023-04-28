@@ -21,10 +21,10 @@ func RunAndCollectOutput(ctx context.Context, params Params) ([]byte, error) {
 		cmd.Stdin = strings.NewReader(params.Stdin)
 	}
 	stdout, err := cmd.StdoutPipe()
-	defer func() { _ = stdout.Close() }()
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = stdout.Close() }()
 
 	type readerResult struct {
 		bytes []byte
