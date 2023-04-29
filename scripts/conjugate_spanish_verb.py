@@ -92,6 +92,8 @@ RULES = [
 ]
 
 if __name__ == '__main__':
+  random.seed()
+
   verb_infinitive = sys.argv[1]
   note_tags = set(json.loads(sys.argv[2]))
 
