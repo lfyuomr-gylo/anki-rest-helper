@@ -43,7 +43,7 @@ class ConjugationRule:
           prob = 1
         if random.random() < prob:
           modifications.append({
-            'set_field_if_not_empty': {self.note_field: conj.get('word', '')}
+            'set_field': {self.note_field: conj.get('word', '')}
           })
         else:
           print(f"do not generate regular conjugation card for field {self.note_field} (prob={prob})", file=sys.stderr)
@@ -83,12 +83,12 @@ RULES = [
       ConjugationRule(note_field="PreteriteVosotros",          prob=0.05, sd_pronoun="vosotros",         sd_paradigm="preteritIndicative"),
       ConjugationRule(note_field="PreteriteEllos",             prob=0.20, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="preteritIndicative"),
 
-      ConjugationRule(note_field="ImperfectYo",                prob=0.15, sd_pronoun="yo",               sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="ImperfectTu",                prob=0.20, sd_pronoun="tú",               sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="ImperfectEl",                prob=0.15, sd_pronoun="él/ella/Ud.",      sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="ImperfectNosotros",          prob=0.15, sd_pronoun="nosotros",         sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="ImperfectVosotros",          prob=0.15, sd_pronoun="vosotros",         sd_paradigm="preteritIndicative"),
-      ConjugationRule(note_field="ImperfectEllos",             prob=0.20, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="preteritIndicative"),
+      ConjugationRule(note_field="ImperfectYo",                prob=0.15, sd_pronoun="yo",               sd_paradigm="imperfectIndicative"),
+      ConjugationRule(note_field="ImperfectTu",                prob=0.20, sd_pronoun="tú",               sd_paradigm="imperfectIndicative"),
+      ConjugationRule(note_field="ImperfectEl",                prob=0.15, sd_pronoun="él/ella/Ud.",      sd_paradigm="imperfectIndicative"),
+      ConjugationRule(note_field="ImperfectNosotros",          prob=0.15, sd_pronoun="nosotros",         sd_paradigm="imperfectIndicative"),
+      ConjugationRule(note_field="ImperfectVosotros",          prob=0.15, sd_pronoun="vosotros",         sd_paradigm="imperfectIndicative"),
+      ConjugationRule(note_field="ImperfectEllos",             prob=0.20, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="imperfectIndicative"),
 ]
 
 if __name__ == '__main__':
