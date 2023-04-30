@@ -8,8 +8,8 @@ type CardID int64
 
 type FieldUpdate struct {
 	// one of
-	Value     *string
-	AudioData []byte
+	Value     *string // what value to write to the field
+	AudioData []byte  // make field to contain specified Audio. Any previous content of the field is reset.
 }
 
 type CreateModelParams struct {

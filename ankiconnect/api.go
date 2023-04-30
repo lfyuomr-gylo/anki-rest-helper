@@ -101,6 +101,12 @@ func (api api) UpdateNoteFields(noteID NoteID, fields map[string]FieldUpdate) er
 		case fieldUpdate.Value != nil:
 			params.Note.Fields[field] = *fieldUpdate.Value
 		case len(fieldUpdate.AudioData) > 0:
+			// AnkiConnect first sets plain values of the fields and only then processes media,
+			// which it just adds to the field.
+			// Thus, we ask it both to set the field to empty string and then to add audio to the field,
+			// achieving 'set field to audio' behaviour instead of simply 'add audio to the field'.
+			params.Note.Fields[field] = ""
+
 			fileName := fmt.Sprintf("%x.mp3", md5.Sum(fieldUpdate.AudioData))
 			params.Note.Audio = append(params.Note.Audio, updateNoteFieldsAudio{
 				FileName:   fileName,
