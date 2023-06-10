@@ -27,6 +27,10 @@ actions:
       path: media/spanish-tenses/spanish-tense-preterite.jpeg
     - ankiName: _spanish-tense-imperfect.jpeg
       path: media/spanish-tenses/spanish-tense-imperfect.jpeg
+    - ankiName: _spanish-tense-perfect.jpeg
+      path: media/spanish-tenses/spanish-tense-perfect.jpeg
+    - ankiName: _spanish-tense-progressive.jpeg
+      path: media/spanish-tenses/spanish-tense-progressive.jpeg
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
@@ -192,6 +196,68 @@ actions:
             tense: _spanish-tense-imperfect.jpeg
         - name: ImperfectEllosExample
 
+        - name: PerfectYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectYoExample
+        - name: PerfectTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectTuExample
+        - name: PerfectEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectElExample
+        - name: PerfectNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectNosotrosExample
+        - name: PerfectVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectVosotrosExample
+        - name: PerfectEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectEllosExample
+
+        - name: ProgressiveYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveYoExample
+        - name: ProgressiveTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveTuExample
+        - name: ProgressiveEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveElExample
+        - name: ProgressiveNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveNosotrosExample
+        - name: ProgressiveVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveVosotrosExample
+        - name: ProgressiveEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveEllosExample
+
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -224,8 +290,20 @@ actions:
             - ImperfectNosotros
             - ImperfectVosotros
             - ImperfectEllos
+            - PerfectYo
+            - PerfectTu
+            - PerfectEl
+            - PerfectNosotros
+            - PerfectVosotros
+            - PerfectEllos
+            - ProgressiveYo
+            - ProgressiveTu
+            - ProgressiveEl
+            - ProgressiveNosotros
+            - ProgressiveVosotros
+            - ProgressiveEllos
           front: |
-            <img src="$$.Vars.tense$$"><br><br>
+            <img src="$$.Vars.tense$$" width="220" height="120"><br><br>
             <i>{{text:Explanation}}</i><br>
             <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
 
@@ -259,7 +337,7 @@ actions:
             });
             </script>
           back: |
-            <img src="$$.Vars.tense$$"><br><br>
+            <img src="$$.Vars.tense$$" width="220" height="120"><br><br>
             <i>{{text:Explanation}}</i><br>
             <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
 
@@ -509,6 +587,18 @@ actions:
         OR (ImperfectNosotros: -tag:conjugation_done:ImperfectNosotros)
         OR (ImperfectVosotros: -tag:conjugation_done:ImperfectVosotros)
         OR (ImperfectEllos: -tag:conjugation_done:ImperfectEllos)
+        OR (PerfectYo: -tag:conjugation_done:PerfectYo)
+        OR (PerfectTu: -tag:conjugation_done:PerfectTu)
+        OR (PerfectEl: -tag:conjugation_done:PerfectEl)
+        OR (PerfectNosotros: -tag:conjugation_done:PerfectNosotros)
+        OR (PerfectVosotros: -tag:conjugation_done:PerfectVosotros)
+        OR (PerfectEllos: -tag:conjugation_done:PerfectEllos)
+        OR (ProgressiveYo: -tag:conjugation_done:ProgressiveYo)
+        OR (ProgressiveTu: -tag:conjugation_done:ProgressiveTu)
+        OR (ProgressiveEl: -tag:conjugation_done:ProgressiveEl)
+        OR (ProgressiveNosotros: -tag:conjugation_done:ProgressiveNosotros)
+        OR (ProgressiveVosotros: -tag:conjugation_done:ProgressiveVosotros)
+        OR (ProgressiveEllos: -tag:conjugation_done:ProgressiveEllos)
       exec:
         command: ./scripts/conjugate_spanish_verb.py
         args:
