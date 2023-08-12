@@ -31,6 +31,8 @@ actions:
       path: media/spanish-tenses/spanish-tense-perfect.jpeg
     - ankiName: _spanish-tense-progressive.jpeg
       path: media/spanish-tenses/spanish-tense-progressive.jpeg
+    - ankiName: _spanish-tense-present-subjunctive.jpeg
+      path: media/spanish-tenses/spanish-tense-present-subjunctive.jpeg
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
@@ -277,6 +279,37 @@ actions:
             tense: _spanish-tense-progressive.jpeg
         - name: ProgressiveEllosExample
 
+        - name: PresentSubjuntivoYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-present-subjunctive.jpeg
+        - name: PresentSubjuntivoYoExample
+        - name: PresentSubjuntivoTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-present-subjunctive.jpeg
+        - name: PresentSubjuntivoTuExample
+        - name: PresentSubjuntivoEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-present-subjunctive.jpeg
+        - name: PresentSubjuntivoElExample
+        - name: PresentSubjuntivoNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-present-subjunctive.jpeg
+        - name: PresentSubjuntivoNosotrosExample
+        - name: PresentSubjuntivoVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-present-subjunctive.jpeg
+        - name: PresentSubjuntivoVosotrosExample
+        - name: PresentSubjuntivoEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-present-subjunctive.jpeg
+        - name: PresentSubjuntivoEllosExample
+
       templates:
         # For each template a distinct card template is created for each field specified in forFields
         # The following meta-variables will be substituted in name, front and back before passing them to Anki:
@@ -321,6 +354,12 @@ actions:
             - ProgressiveNosotros
             - ProgressiveVosotros
             - ProgressiveEllos
+            - PresentSubjuntivoYo
+            - PresentSubjuntivoTu
+            - PresentSubjuntivoEl
+            - PresentSubjuntivoNosotros
+            - PresentSubjuntivoVosotros
+            - PresentSubjuntivoEllos
           front: |
             <img src="$$.Vars.tense$$" width="220" height="120"><br><br>
             <i>{{text:Explanation}}</i><br>
@@ -619,6 +658,12 @@ actions:
           OR (ProgressiveNosotros: -tag:conjugation_done:ProgressiveNosotros)
           OR (ProgressiveVosotros: -tag:conjugation_done:ProgressiveVosotros)
           OR (ProgressiveEllos: -tag:conjugation_done:ProgressiveEllos)
+          OR (PresentSubjuntivoYo: -tag:conjugation_done:PresentSubjuntivoYo)
+          OR (PresentSubjuntivoTu: -tag:conjugation_done:PresentSubjuntivoTu)
+          OR (PresentSubjuntivoEl: -tag:conjugation_done:PresentSubjuntivoEl)
+          OR (PresentSubjuntivoNosotros: -tag:conjugation_done:PresentSubjuntivoNosotros)
+          OR (PresentSubjuntivoVosotros: -tag:conjugation_done:PresentSubjuntivoVosotros)
+          OR (PresentSubjuntivoEllos: -tag:conjugation_done:PresentSubjuntivoEllos)
         )
       exec:
         command: ./scripts/conjugate_spanish_verb.py

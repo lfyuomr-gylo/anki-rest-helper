@@ -100,6 +100,13 @@ RULES = [
       ConjugationRule(note_field="ProgressiveNosotros",        prob=0.15, iprob=0.25, sd_pronoun="nosotros",         sd_paradigm="presentContinuous"),
       ConjugationRule(note_field="ProgressiveVosotros",        prob=0.15, iprob=0.25, sd_pronoun="vosotros",         sd_paradigm="presentContinuous"),
       ConjugationRule(note_field="ProgressiveEllos",           prob=0.15, iprob=0.25, sd_pronoun="ellos/ellas/Uds.", sd_paradigm="presentContinuous"),
+
+      ConjugationRule(note_field="PresentSubjuntivoYo",        prob=0.15,             sd_pronoun="yo",               sd_paradigm="presentSubjunctive"),
+      ConjugationRule(note_field="PresentSubjuntivoTu",        prob=0.20,             sd_pronoun="tú",               sd_paradigm="presentSubjunctive"),
+      ConjugationRule(note_field="PresentSubjuntivoEl",        prob=0.15,             sd_pronoun="él/ella/Ud.",      sd_paradigm="presentSubjunctive"),
+      ConjugationRule(note_field="PresentSubjuntivoNosotros",  prob=0.15,             sd_pronoun="nosotros",         sd_paradigm="presentSubjunctive"),
+      ConjugationRule(note_field="PresentSubjuntivoVosotros",  prob=0.15,             sd_pronoun="vosotros",         sd_paradigm="presentSubjunctive"),
+      ConjugationRule(note_field="PresentSubjuntivoEllos",     prob=0.20,             sd_pronoun="ellos/ellas/Uds.", sd_paradigm="presentSubjunctive"),
 ]
 
 if __name__ == '__main__':
