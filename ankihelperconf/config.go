@@ -8,6 +8,13 @@ import (
 )
 
 type Config struct {
+	// Path is the path to the file from which this config was loaded.
+	Path string
+
+	// RunConfigs contains a list of configurations to be executed.
+	// If it's set, fields below should not be used.
+	RunConfigs []Config
+
 	Anki    Anki
 	Azure   Azure
 	Actions Actions

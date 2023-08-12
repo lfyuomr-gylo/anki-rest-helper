@@ -5,17 +5,62 @@ import (
 	"anki-rest-enhancer/util/stringx"
 	"fmt"
 	"github.com/joomcode/errorx"
+	"gopkg.in/yaml.v2"
 	"io"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
 )
 
+func LoadYAML(configPath string) (Config, error) {
+	rawConf, err := loadRawYAML(configPath)
+	if err != nil {
+		return Config{}, errorx.Decorate(err, "failed to load config file %q", configPath)
+	}
+	conf, err := rawConf.Parse(filepath.Dir(configPath))
+	if err != nil {
+		return Config{}, errorx.Decorate(err, "failed to parse config file %q", configPath)
+	}
+
+	conf.Path = configPath
+	return conf, nil
+}
+
+func loadRawYAML(configPath string) (YAML, error) {
+	confFile, err := os.Open(configPath)
+	if err != nil {
+		return YAML{}, errorx.ExternalError.Wrap(err, "failed to open config file")
+	}
+	defer func() { _ = confFile.Close() }()
+	confData, err := io.ReadAll(confFile)
+	if err != nil {
+		return YAML{}, errorx.ExternalError.Wrap(err, "failed to read config file")
+	}
+
+	var rawConf YAML
+	if err := yaml.UnmarshalStrict(confData, &rawConf); err != nil {
+		return YAML{}, errorx.IllegalFormat.Wrap(err, "malformed enhancer config")
+	}
+
+	return rawConf, nil
+}
+
 type YAML struct {
+	// RunConfigs instructs the tool to run each config file individually.
+	// Configurations are executed in the order they are listed.
+	//
+	// If an error occurs while executing a config, whole script execution is aborted
+	// and the following configs won't be executed.
+	//
+	// NOTE: there should be no reference loops between config files!
+	// NOTE: if this field is set, no other fields are allowed in the config.
+	RunConfigs []string `yaml:"runConfigs"`
+
 	Anki    YAMLAnki    `yaml:"anki"`
 	Azure   YAMLAzure   `yaml:"azure"`
 	Actions YAMLActions `yaml:"actions"`
@@ -23,6 +68,28 @@ type YAML struct {
 
 func (c YAML) Parse(configDir string) (Config, error) {
 	conf := Config{}
+
+	if len(c.RunConfigs) > 0 {
+		hasOtherFieldsSet := !reflect.DeepEqual(c, YAML{RunConfigs: c.RunConfigs})
+		if hasOtherFieldsSet {
+			return Config{}, errorx.IllegalFormat.New("config file has 'runConfigs' and other fields set simultaneously")
+		}
+
+		configs := make([]Config, len(c.RunConfigs))
+		for idx, configPath := range c.RunConfigs {
+			if !filepath.IsAbs(configPath) {
+				configPath = filepath.Join(configDir, configPath)
+				log.Printf("Resolve relative path of a nested config file: %s", configPath)
+			}
+
+			config, err := LoadYAML(configPath)
+			if err != nil {
+				return Config{}, err
+			}
+			configs[idx] = config
+		}
+		return Config{RunConfigs: configs}, nil
+	}
 
 	{
 		azureConf, err := c.Azure.Parse(configDir)

@@ -1,5 +1,5 @@
 .idea/
 
-azure-key.txt
+config/azure-key.txt
 
 build/

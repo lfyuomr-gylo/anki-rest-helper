@@ -7,8 +7,6 @@ import (
 	"anki-rest-enhancer/azuretts"
 	"flag"
 	"github.com/joomcode/errorx"
-	"gopkg.in/yaml.v2"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -30,28 +28,28 @@ func main() {
 
 func doMain() error {
 	configPath := findConfigFile()
-	confFile, err := os.Open(configPath)
-	if err != nil {
-		return errorx.ExternalError.Wrap(err, "failed to open config file: %s", configPath)
-	}
-	defer func() { _ = confFile.Close() }()
-	confData, err := io.ReadAll(confFile)
-	if err != nil {
-		return errorx.ExternalError.Wrap(err, "failed to read config file")
-	}
 
-	var rawConf ankihelperconf.YAML
-	if err := yaml.UnmarshalStrict(confData, &rawConf); err != nil {
-		return errorx.IllegalFormat.Wrap(err, "Malformed enhancer config")
-	}
-	conf, err := rawConf.Parse(filepath.Dir(configPath))
+	conf, err := ankihelperconf.LoadYAML(configPath)
 	if err != nil {
 		return err
 	}
 
+	return runConfig(conf)
+}
+
+func runConfig(conf ankihelperconf.Config) error {
+	log.Printf("Running config file %s", conf.Path)
+	if len(conf.RunConfigs) > 0 {
+		for _, conf := range conf.RunConfigs {
+			if err := runConfig(conf); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	azureTTS := azuretts.NewAPI(conf.Azure)
 	ankiConnect := ankiconnect.NewAPI(conf.Anki)
-
 	enhancer := ankihelper.NewHelper(ankiConnect, azureTTS)
 	return enhancer.Run(conf.Actions)
 }

@@ -1,0 +1,624 @@
+azure:
+  # Relative path to a file that contains Azure API key.
+  apiKeyFile: azure-key.txt
+  endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
+  voice: es-ES-AlvaroNeural
+  #  voice: es-MX-JorgeNeural
+  #  voice: es-PE-AlexNeural
+  minPauseBetweenRequests: 2100ms
+  retryOnTooManyRequests: true
+#  logRequests: true
+anki:
+  # NOTE: this is non-default port. If you didn't change it manually in yor plugin configuration,
+  #       remove the following line so that anki-helper uses default AnkiConnect address.
+  connectUrl: 'http://localhost:8766'
+  # logRequests: true
+actions:
+  uploadMedia:
+    # Files prefixed with underscore won't be automatically deleted by Anki when unused.
+    # Relative file paths are resolved against the directory where configuration file is placed.
+    - ankiName: _spanish-infinitive.png
+      path: media/spanish-tenses/spanish-infinitive.png
+    - ankiName: _spanish-tense-imperative.jpeg
+      path: media/spanish-tenses/spanish-tense-imperative.jpeg
+    - ankiName: _spanish-tense-present.jpeg
+      path: media/spanish-tenses/spanish-tense-present.jpeg
+    - ankiName: _spanish-tense-preterite.jpeg
+      path: media/spanish-tenses/spanish-tense-preterite.jpeg
+    - ankiName: _spanish-tense-imperfect.jpeg
+      path: media/spanish-tenses/spanish-tense-imperfect.jpeg
+    - ankiName: _spanish-tense-perfect.jpeg
+      path: media/spanish-tenses/spanish-tense-perfect.jpeg
+    - ankiName: _spanish-tense-progressive.jpeg
+      path: media/spanish-tenses/spanish-tense-progressive.jpeg
+  tts:
+    - forGeneratedNoteType: SpanishVerb
+      textPreprocessing:
+        - regexp: '\s+'
+          replacement: ' '
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
+    - forGeneratedNoteType: SpanishGenderDependent
+      textPreprocessing:
+        - regexp: '\s+'
+          replacement: ' '
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
+    - textField: Word
+      audioField: WordVoiceover
+      textPreprocessing:
+        - regexp: '\s+'
+          replacement: ' '
+    - textField: Example1
+      audioField: Example1Voiceover
+      textPreprocessing:
+        - regexp: '</?div>'
+          replacement: ''
+        - regexp: '&nbsp;'
+          replacement: ''
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
+        - regexp: '\s+'
+          replacement: ' '
+    - textField: Example2
+      audioField: Example2Voiceover
+      textPreprocessing:
+        - regexp: '</?div>'
+          replacement: ''
+        - regexp: '&nbsp;'
+          replacement: ''
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
+        - regexp: '\s+'
+          replacement: ' '
+  noteTypes:
+    - name: SpanishVerb
+      fields:
+        # For each field below, the following fields are created:
+        #   Field,
+        #   FieldVoiceover (unless skipVoiceover: true)
+        - name: Word
+          vars:
+            pronoun: ""
+            tense: _spanish-infinitive.png
+        - name: Explanation
+          skipVoiceover: true
+
+        - name: IndicativePresentYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentYoExample
+        - name: IndicativePresentTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentTuExample
+        - name: IndicativePresentEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentElExample
+        - name: IndicativePresentNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentNosotrosExample
+        - name: IndicativePresentVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentVosotrosExample
+        - name: IndicativePresentEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-present.jpeg
+        - name: IndicativePresentEllosExample
+
+        - name: ImperativeAffirmativeTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-imperative.jpeg
+        - name: ImperativeAffirmativeTuExample
+        - name: ImperativeAffirmativeUsted
+          vars:
+            pronoun: usted
+            tense: _spanish-tense-imperative.jpeg
+        - name: ImperativeAffirmativeUstedExample
+
+        - name: PreteriteYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteYoExample
+        - name: PreteriteTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteTuExample
+        - name: PreteriteEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteElExample
+        - name: PreteriteNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteNosotrosExample
+        - name: PreteriteVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteVosotrosExample
+        - name: PreteriteEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-preterite.jpeg
+        - name: PreteriteEllosExample
+
+        - name: ImperfectYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectYoExample
+        - name: ImperfectTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectTuExample
+        - name: ImperfectEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectElExample
+        - name: ImperfectNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectNosotrosExample
+        - name: ImperfectVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectVosotrosExample
+        - name: ImperfectEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-imperfect.jpeg
+        - name: ImperfectEllosExample
+
+        - name: PerfectYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectYoExample
+        - name: PerfectTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectTuExample
+        - name: PerfectEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectElExample
+        - name: PerfectNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectNosotrosExample
+        - name: PerfectVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectVosotrosExample
+        - name: PerfectEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-perfect.jpeg
+        - name: PerfectEllosExample
+
+        - name: ProgressiveYo
+          vars:
+            pronoun: yo
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveYoExample
+        - name: ProgressiveTu
+          vars:
+            pronoun: tú
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveTuExample
+        - name: ProgressiveEl
+          vars:
+            pronoun: él/ella/usted
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveElExample
+        - name: ProgressiveNosotros
+          vars:
+            pronoun: nosotros
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveNosotrosExample
+        - name: ProgressiveVosotros
+          vars:
+            pronoun: vosotros
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveVosotrosExample
+        - name: ProgressiveEllos
+          vars:
+            pronoun: ellos/ellas/ustedes
+            tense: _spanish-tense-progressive.jpeg
+        - name: ProgressiveEllosExample
+
+      templates:
+        # For each template a distinct card template is created for each field specified in forFields
+        # The following meta-variables will be substituted in name, front and back before passing them to Anki:
+        #   $$.Field$$, $$.FieldVoiceover$$
+        #
+        # Additionally, variables attached to a field are available in the template as $$.Vars.varName$$.
+        #
+        # Front layout is automatically wrapped with {{^$$.Field$$}}{{/$$.Field$$}}, so there is no need in
+        # adding this manually
+        - name: "FillIn$$.Field$$"
+          forFields:
+            - Word
+            - IndicativePresentYo
+            - IndicativePresentTu
+            - IndicativePresentEl
+            - IndicativePresentNosotros
+            - IndicativePresentVosotros
+            - IndicativePresentEllos
+            - ImperativeAffirmativeTu
+            - ImperativeAffirmativeUsted
+            - PreteriteYo
+            - PreteriteTu
+            - PreteriteEl
+            - PreteriteNosotros
+            - PreteriteVosotros
+            - PreteriteEllos
+            - ImperfectYo
+            - ImperfectTu
+            - ImperfectEl
+            - ImperfectNosotros
+            - ImperfectVosotros
+            - ImperfectEllos
+            - PerfectYo
+            - PerfectTu
+            - PerfectEl
+            - PerfectNosotros
+            - PerfectVosotros
+            - PerfectEllos
+            - ProgressiveYo
+            - ProgressiveTu
+            - ProgressiveEl
+            - ProgressiveNosotros
+            - ProgressiveVosotros
+            - ProgressiveEllos
+          front: |
+            <img src="$$.Vars.tense$$" width="220" height="120"><br><br>
+            <i>{{text:Explanation}}</i><br>
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+
+            $$ if ne .Field "Word"$$
+              {{#$$.Field$$Example}}
+                <div>
+                  <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+                </div>
+              {{/$$.Field$$Example}}
+            $$ end $$
+
+            {{type::$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+          back: |
+            <img src="$$.Vars.tense$$" width="220" height="120"><br><br>
+            <i>{{text:Explanation}}</i><br>
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
+
+            $$ if ne .Field "Word"$$
+              {{#$$.Field$$Example}}
+                <div>
+                  <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span> {{$$.Field$$ExampleVoiceover}}
+                </div>
+              {{/$$.Field$$Example}}
+            $$ end $$
+
+            <hr id=answer>
+            {{type::$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+
+        .verb {
+          font-style: italic;
+          font-weight: bold;
+          font-size: 60%;
+        }
+
+        .cloze {
+         font-weight: bold;
+         color: blue;
+        }
+
+    - name: SpanishGenderDependent
+      fields:
+        - name: Explanation
+          skipVoiceover: true
+        - name: Synonyms
+          skipVoiceover: true
+        - name: Male
+          vars:
+            gender: masculino
+            number: singular
+        - name: MaleExample
+        - name: Female
+          vars:
+            gender: femenino
+            number: singular
+        - name: FemaleExample
+        - name: PluralMale
+          vars:
+            gender: masculino
+            number: plural
+        - name: PluralMaleExample
+        - name: PluralFemale
+          vars:
+            gender: femenino
+            number: plural
+        - name: PluralFemaleExample
+      templates:
+        - name: "FillIn$$.Field$$"
+          forFields:
+            - Male
+            - Female
+            - PluralMale
+            - PluralFemale
+          front: |
+            <div>Adjetivo/nacionalidad/ocupación/etc.</div>
+            <div>
+              <span class="$$.Vars.gender$$">$$.Vars.gender$$</span>
+              <span class="$$.Vars.number$$">$$.Vars.number$$</span>
+            </div>
+
+            <br>
+            {{Explanation}}
+            
+            {{#Synonyms}}
+              <div>
+                Sinónimos: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+            
+            {{#$$.Field$$Example}}
+              <div>
+                Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+              </div>
+            {{/$$.Field$$Example}}
+
+            {{type:$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+          back: |
+            <div>Adjetivo/nacionalidad/ocupación/etc.</div>
+            <div>
+              <span class="$$.Vars.gender$$">$$.Vars.gender$$</span>
+              <span class="$$.Vars.number$$">$$.Vars.number$$</span>
+            </div>
+
+            {{Explanation}} {{$$.FieldVoiceover$$}} 
+
+            {{#Synonyms}}
+              <div>
+                <br>Sinónimos: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+            
+            {{#$$.Field$$Example}}
+              <div>
+                <br>Ejemplo:<br><span class="mycloze">{{$$.Field$$Example}}</span> {{$$.Field$$ExampleVoiceover}} 
+              </div>
+            {{/$$.Field$$Example}}
+
+            <hr id="answer">
+
+            {{type:$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+        
+        .cloze {
+          font-weight: bold;
+          color: blue;
+        }        
+
+        .masculino {
+        	font-weight: bold;
+          color: blue;
+        }
+
+        .femenino {
+        	font-weight: bold;
+          color: hotpink;
+        }
+
+        .singular {
+          font-style: italic;
+        }
+
+        .plural {
+          font-weight: bold;
+        }
+  noteProcessing:
+    # Swap back 'Word' and 'Explanation' field in verb notes
+    # where they are accidentally mixed up.
+    - noteFilter: note:SpanishVerb Word:[eng]_*
+      exec:
+        command: ./scripts/set_fields.py
+        args:
+          - Word
+          - $$.Note.Fields.Explanation$$
+          - Explanation
+          - $$.Note.Fields.Word$$
+          - WordVoiceover
+          - ""
+    # only process notes that have at least one of the conjugation fields empty
+    - noteFilter: |
+        (IndicativePresentYo: -tag:conjugation_done:IndicativePresentYo)
+        OR (IndicativePresentTu: -tag:conjugation_done:IndicativePresentTu)
+        OR (IndicativePresentEl: -tag:conjugation_done:IndicativePresentEl)
+        OR (IndicativePresentNosotros: -tag:conjugation_done:IndicativePresentNosotros)
+        OR (IndicativePresentVosotros: -tag:conjugation_done:IndicativePresentVosotros)
+        OR (IndicativePresentEllos: -tag:conjugation_done:IndicativePresentEllos)
+        OR (ImperativeAffirmativeTu: -tag:conjugation_done:ImperativeAffirmativeTu)
+        OR (ImperativeAffirmativeUsted: -tag:conjugation_done:ImperativeAffirmativeUsted)
+        OR (PreteriteYo: -tag:conjugation_done:PreteriteYo)
+        OR (PreteriteTu: -tag:conjugation_done:PreteriteTu)
+        OR (PreteriteEl: -tag:conjugation_done:PreteriteEl)
+        OR (PreteriteNosotros: -tag:conjugation_done:PreteriteNosotros)
+        OR (PreteriteVosotros: -tag:conjugation_done:PreteriteVosotros)
+        OR (PreteriteEllos: -tag:conjugation_done:PreteriteEllos)
+        OR (ImperfectYo: -tag:conjugation_done:ImperfectYo)
+        OR (ImperfectTu: -tag:conjugation_done:ImperfectTu)
+        OR (ImperfectEl: -tag:conjugation_done:ImperfectEl)
+        OR (ImperfectNosotros: -tag:conjugation_done:ImperfectNosotros)
+        OR (ImperfectVosotros: -tag:conjugation_done:ImperfectVosotros)
+        OR (ImperfectEllos: -tag:conjugation_done:ImperfectEllos)
+        OR (PerfectYo: -tag:conjugation_done:PerfectYo)
+        OR (PerfectTu: -tag:conjugation_done:PerfectTu)
+        OR (PerfectEl: -tag:conjugation_done:PerfectEl)
+        OR (PerfectNosotros: -tag:conjugation_done:PerfectNosotros)
+        OR (PerfectVosotros: -tag:conjugation_done:PerfectVosotros)
+        OR (PerfectEllos: -tag:conjugation_done:PerfectEllos)
+        OR (ProgressiveYo: -tag:conjugation_done:ProgressiveYo)
+        OR (ProgressiveTu: -tag:conjugation_done:ProgressiveTu)
+        OR (ProgressiveEl: -tag:conjugation_done:ProgressiveEl)
+        OR (ProgressiveNosotros: -tag:conjugation_done:ProgressiveNosotros)
+        OR (ProgressiveVosotros: -tag:conjugation_done:ProgressiveVosotros)
+        OR (ProgressiveEllos: -tag:conjugation_done:ProgressiveEllos)
+      exec:
+        command: ./scripts/conjugate_spanish_verb.py
+        args:
+          - "$$.Note.Fields.Word$$"
+          - "$$.Note.Tags | to_json $$"
+      minPauseBetweenExecutions: 1200ms
+      timeout: 5s
+    # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
+    - noteFilter: Image:_* -tag:image_resized
+      exec:
+        command: ./scripts/resize_image.py
+        args:
+          - Image
+          - $$.Note.Fields.Image$$
+          - 200
+          - image_resized
+  cardsOrganization:
+    - filter: -note:SpanishVerb*
+      targetDeck: Spanish::00_Other
+    - filter: note:SpanishVerb* card:FillInWord*
+      targetDeck: Spanish::01_VerbsInfinitive
+    - filter: note:SpanishVerb* -card:FillInWord*
+      targetDeck: Spanish::02_VerbsConjugation
