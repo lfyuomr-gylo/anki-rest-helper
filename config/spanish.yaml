@@ -34,27 +34,45 @@ actions:
   tts:
     - forGeneratedNoteType: SpanishVerb
       textPreprocessing:
-        - regexp: '\s+'
-          replacement: ' '
+        - regexp: '</?div>'
+          replacement: ''
+        - regexp: '&nbsp;'
+          replacement: ''
         - regexp: '\{\{'
           replacement: ''
         - regexp: '\}\}'
           replacement: ''
+        - regexp: '\s+'
+          replacement: ' '
     - forGeneratedNoteType: SpanishGenderDependent
       textPreprocessing:
-        - regexp: '\s+'
-          replacement: ' '
+        - regexp: '</?div>'
+          replacement: ''
+        - regexp: '&nbsp;'
+          replacement: ''
         - regexp: '\{\{'
           replacement: ''
         - regexp: '\}\}'
           replacement: ''
+        - regexp: '\s+'
+          replacement: ' '
     - textField: Word
       audioField: WordVoiceover
+      noteFilter: "note:Spanish* WordVoiceover:"
       textPreprocessing:
+        - regexp: '</?div>'
+          replacement: ''
+        - regexp: '&nbsp;'
+          replacement: ''
+        - regexp: '\{\{'
+          replacement: ''
+        - regexp: '\}\}'
+          replacement: ''
         - regexp: '\s+'
           replacement: ' '
     - textField: Example1
       audioField: Example1Voiceover
+      noteFilter: "note:Spanish* Example1:_* Example1Voiceover:"
       textPreprocessing:
         - regexp: '</?div>'
           replacement: ''
@@ -68,6 +86,7 @@ actions:
           replacement: ' '
     - textField: Example2
       audioField: Example2Voiceover
+      noteFilter: "note:Spanish* Example2:_* Example2Voiceover:"
       textPreprocessing:
         - regexp: '</?div>'
           replacement: ''
@@ -567,38 +586,40 @@ actions:
           - ""
     # only process notes that have at least one of the conjugation fields empty
     - noteFilter: |
+        note:Spanish* (
         (IndicativePresentYo: -tag:conjugation_done:IndicativePresentYo)
-        OR (IndicativePresentTu: -tag:conjugation_done:IndicativePresentTu)
-        OR (IndicativePresentEl: -tag:conjugation_done:IndicativePresentEl)
-        OR (IndicativePresentNosotros: -tag:conjugation_done:IndicativePresentNosotros)
-        OR (IndicativePresentVosotros: -tag:conjugation_done:IndicativePresentVosotros)
-        OR (IndicativePresentEllos: -tag:conjugation_done:IndicativePresentEllos)
-        OR (ImperativeAffirmativeTu: -tag:conjugation_done:ImperativeAffirmativeTu)
-        OR (ImperativeAffirmativeUsted: -tag:conjugation_done:ImperativeAffirmativeUsted)
-        OR (PreteriteYo: -tag:conjugation_done:PreteriteYo)
-        OR (PreteriteTu: -tag:conjugation_done:PreteriteTu)
-        OR (PreteriteEl: -tag:conjugation_done:PreteriteEl)
-        OR (PreteriteNosotros: -tag:conjugation_done:PreteriteNosotros)
-        OR (PreteriteVosotros: -tag:conjugation_done:PreteriteVosotros)
-        OR (PreteriteEllos: -tag:conjugation_done:PreteriteEllos)
-        OR (ImperfectYo: -tag:conjugation_done:ImperfectYo)
-        OR (ImperfectTu: -tag:conjugation_done:ImperfectTu)
-        OR (ImperfectEl: -tag:conjugation_done:ImperfectEl)
-        OR (ImperfectNosotros: -tag:conjugation_done:ImperfectNosotros)
-        OR (ImperfectVosotros: -tag:conjugation_done:ImperfectVosotros)
-        OR (ImperfectEllos: -tag:conjugation_done:ImperfectEllos)
-        OR (PerfectYo: -tag:conjugation_done:PerfectYo)
-        OR (PerfectTu: -tag:conjugation_done:PerfectTu)
-        OR (PerfectEl: -tag:conjugation_done:PerfectEl)
-        OR (PerfectNosotros: -tag:conjugation_done:PerfectNosotros)
-        OR (PerfectVosotros: -tag:conjugation_done:PerfectVosotros)
-        OR (PerfectEllos: -tag:conjugation_done:PerfectEllos)
-        OR (ProgressiveYo: -tag:conjugation_done:ProgressiveYo)
-        OR (ProgressiveTu: -tag:conjugation_done:ProgressiveTu)
-        OR (ProgressiveEl: -tag:conjugation_done:ProgressiveEl)
-        OR (ProgressiveNosotros: -tag:conjugation_done:ProgressiveNosotros)
-        OR (ProgressiveVosotros: -tag:conjugation_done:ProgressiveVosotros)
-        OR (ProgressiveEllos: -tag:conjugation_done:ProgressiveEllos)
+          OR (IndicativePresentTu: -tag:conjugation_done:IndicativePresentTu)
+          OR (IndicativePresentEl: -tag:conjugation_done:IndicativePresentEl)
+          OR (IndicativePresentNosotros: -tag:conjugation_done:IndicativePresentNosotros)
+          OR (IndicativePresentVosotros: -tag:conjugation_done:IndicativePresentVosotros)
+          OR (IndicativePresentEllos: -tag:conjugation_done:IndicativePresentEllos)
+          OR (ImperativeAffirmativeTu: -tag:conjugation_done:ImperativeAffirmativeTu)
+          OR (ImperativeAffirmativeUsted: -tag:conjugation_done:ImperativeAffirmativeUsted)
+          OR (PreteriteYo: -tag:conjugation_done:PreteriteYo)
+          OR (PreteriteTu: -tag:conjugation_done:PreteriteTu)
+          OR (PreteriteEl: -tag:conjugation_done:PreteriteEl)
+          OR (PreteriteNosotros: -tag:conjugation_done:PreteriteNosotros)
+          OR (PreteriteVosotros: -tag:conjugation_done:PreteriteVosotros)
+          OR (PreteriteEllos: -tag:conjugation_done:PreteriteEllos)
+          OR (ImperfectYo: -tag:conjugation_done:ImperfectYo)
+          OR (ImperfectTu: -tag:conjugation_done:ImperfectTu)
+          OR (ImperfectEl: -tag:conjugation_done:ImperfectEl)
+          OR (ImperfectNosotros: -tag:conjugation_done:ImperfectNosotros)
+          OR (ImperfectVosotros: -tag:conjugation_done:ImperfectVosotros)
+          OR (ImperfectEllos: -tag:conjugation_done:ImperfectEllos)
+          OR (PerfectYo: -tag:conjugation_done:PerfectYo)
+          OR (PerfectTu: -tag:conjugation_done:PerfectTu)
+          OR (PerfectEl: -tag:conjugation_done:PerfectEl)
+          OR (PerfectNosotros: -tag:conjugation_done:PerfectNosotros)
+          OR (PerfectVosotros: -tag:conjugation_done:PerfectVosotros)
+          OR (PerfectEllos: -tag:conjugation_done:PerfectEllos)
+          OR (ProgressiveYo: -tag:conjugation_done:ProgressiveYo)
+          OR (ProgressiveTu: -tag:conjugation_done:ProgressiveTu)
+          OR (ProgressiveEl: -tag:conjugation_done:ProgressiveEl)
+          OR (ProgressiveNosotros: -tag:conjugation_done:ProgressiveNosotros)
+          OR (ProgressiveVosotros: -tag:conjugation_done:ProgressiveVosotros)
+          OR (ProgressiveEllos: -tag:conjugation_done:ProgressiveEllos)
+        )
       exec:
         command: ./scripts/conjugate_spanish_verb.py
         args:
@@ -607,7 +628,7 @@ actions:
       minPauseBetweenExecutions: 1200ms
       timeout: 5s
     # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
-    - noteFilter: Image:_* -tag:image_resized
+    - noteFilter: note:Spanish* Image:_* -tag:image_resized
       exec:
         command: ./scripts/resize_image.py
         args:
@@ -616,7 +637,7 @@ actions:
           - 200
           - image_resized
   cardsOrganization:
-    - filter: -note:SpanishVerb*
+    - filter: -note:SpanishVerb* note:Spanish*
       targetDeck: Spanish::00_Other
     - filter: note:SpanishVerb* card:FillInWord*
       targetDeck: Spanish::01_VerbsInfinitive
