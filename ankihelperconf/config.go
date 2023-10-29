@@ -3,6 +3,7 @@ package ankihelperconf
 import (
 	"net/url"
 	"regexp"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -116,4 +117,13 @@ type regexpProcessor struct {
 
 func (p regexpProcessor) Process(text string) string {
 	return p.regexp.ReplaceAllString(text, p.replacement)
+}
+
+type replaceProcessor struct {
+	pattern     string
+	replacement string
+}
+
+func (p replaceProcessor) Process(text string) string {
+	return strings.ReplaceAll(text, p.pattern, p.replacement)
 }

@@ -17,6 +17,14 @@ import (
 	"time"
 )
 
+var defaultTextProcessing = []YAMLTextProcessing{
+	{Regexp: "</?[a-z]+>", Replacement: ""}, // HTML tags
+	{Literal: "&nbsp;", Replacement: ""},
+	{Literal: "{{", Replacement: ""},
+	{Literal: "}}", Replacement: ""},
+	{Regexp: "\\s+", Replacement: " "},
+}
+
 func LoadYAML(configPath string) (Config, error) {
 	rawConf, err := loadRawYAML(configPath)
 	if err != nil {
@@ -390,7 +398,11 @@ func (c YAMLAnkiTTS) Parse() (AnkiTTS, error) {
 		return AnkiTTS{}, errorx.IllegalState.New("Either generated note type or both text and audio fields must be specified for TTS")
 	}
 
-	for i, processing := range c.TextProcessing {
+	textProcessing := c.TextProcessing
+	if len(textProcessing) == 0 {
+		textProcessing = defaultTextProcessing
+	}
+	for i, processing := range textProcessing {
 		parsed, err := processing.Parse()
 		if err != nil {
 			return AnkiTTS{}, errorx.Decorate(err, "Invalid TTS #%d", i)
@@ -403,15 +415,23 @@ func (c YAMLAnkiTTS) Parse() (AnkiTTS, error) {
 
 type YAMLTextProcessing struct {
 	Regexp      string `yaml:"regexp"`
+	Literal     string `yaml:"literal"`
 	Replacement string `yaml:"replacement"`
 }
 
 func (c YAMLTextProcessing) Parse() (TextProcessor, error) {
-	compiled, err := regexp.Compile(c.Regexp)
-	if err != nil {
-		return nil, errorx.IllegalFormat.Wrap(err, "malformed regexp")
+	switch {
+	case c.Regexp != "":
+		compiled, err := regexp.Compile(c.Regexp)
+		if err != nil {
+			return nil, errorx.IllegalFormat.Wrap(err, "malformed regexp")
+		}
+		return regexpProcessor{regexp: compiled, replacement: c.Replacement}, nil
+	case c.Literal != "":
+		return replaceProcessor{pattern: c.Literal, replacement: c.Replacement}, nil
+	default:
+		return nil, errorx.IllegalFormat.New("text processing does not define pattern to replace")
 	}
-	return regexpProcessor{regexp: compiled, replacement: c.Replacement}, nil
 }
 
 type YAMLAnkiNoteType struct {

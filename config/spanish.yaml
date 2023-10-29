@@ -35,71 +35,16 @@ actions:
       path: media/spanish-tenses/spanish-tense-present-subjunctive.jpeg
   tts:
     - forGeneratedNoteType: SpanishVerb
-      textPreprocessing:
-        - regexp: '</?div>'
-          replacement: ''
-        - regexp: '&nbsp;'
-          replacement: ''
-        - regexp: '\{\{'
-          replacement: ''
-        - regexp: '\}\}'
-          replacement: ''
-        - regexp: '\s+'
-          replacement: ' '
     - forGeneratedNoteType: SpanishGenderDependent
-      textPreprocessing:
-        - regexp: '</?div>'
-          replacement: ''
-        - regexp: '&nbsp;'
-          replacement: ''
-        - regexp: '\{\{'
-          replacement: ''
-        - regexp: '\}\}'
-          replacement: ''
-        - regexp: '\s+'
-          replacement: ' '
     - textField: Word
       audioField: WordVoiceover
       noteFilter: "note:Spanish* WordVoiceover:"
-      textPreprocessing:
-        - regexp: '</?div>'
-          replacement: ''
-        - regexp: '&nbsp;'
-          replacement: ''
-        - regexp: '\{\{'
-          replacement: ''
-        - regexp: '\}\}'
-          replacement: ''
-        - regexp: '\s+'
-          replacement: ' '
     - textField: Example1
       audioField: Example1Voiceover
       noteFilter: "note:Spanish* Example1:_* Example1Voiceover:"
-      textPreprocessing:
-        - regexp: '</?div>'
-          replacement: ''
-        - regexp: '&nbsp;'
-          replacement: ''
-        - regexp: '\{\{'
-          replacement: ''
-        - regexp: '\}\}'
-          replacement: ''
-        - regexp: '\s+'
-          replacement: ' '
     - textField: Example2
       audioField: Example2Voiceover
       noteFilter: "note:Spanish* Example2:_* Example2Voiceover:"
-      textPreprocessing:
-        - regexp: '</?div>'
-          replacement: ''
-        - regexp: '&nbsp;'
-          replacement: ''
-        - regexp: '\{\{'
-          replacement: ''
-        - regexp: '\}\}'
-          replacement: ''
-        - regexp: '\s+'
-          replacement: ' '
   noteTypes:
     - name: SpanishVerb
       fields:
