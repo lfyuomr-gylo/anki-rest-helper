@@ -1,0 +1,39 @@
+azure:
+  # Relative path to a file that contains Azure API key.
+  apiKeyFile: azure-key.txt
+  endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
+  voice: de-DE-KillianNeural
+  minPauseBetweenRequests: 2100ms
+  retryOnTooManyRequests: true
+#  logRequests: true
+anki:
+  # NOTE: this is non-default port. If you didn't change it manually in yor plugin configuration,
+  #       remove the following line so that anki-helper uses default AnkiConnect address.
+  connectUrl: 'http://localhost:8766'
+  # logRequests: true
+actions:
+  tts:
+    - textField: Word
+      audioField: WordVoiceover
+      noteFilter: "note:German* Word:_* WordVoiceover:"
+    - textField: Singular
+      audioField: SingularVoiceover
+      noteFilter: "note:German* Singular:_* SingularVoiceover:"
+    - textField: SingularExample
+      audioField: SingularExampleVoiceover
+      noteFilter: "note:German* SingularExample:_* SingularExampleVoiceover:"
+    - textField: Plural
+      audioField: PluralVoiceover
+      noteFilter: "note:German* Plural:_* PluralVoiceover:"
+    - textField: PluralExample
+      audioField: PluralExampleVoiceover
+      noteFilter: "note:German* PluralExample:_* PluralExampleVoiceover:"
+  noteProcessing:
+    - noteFilter: "note:GermanNoun Singular:_* Gender:"
+      exec:
+        command: ./scripts/deduce_german_gender.py
+        args:
+          - $$.Note.Fields.Singular$$
+  cardsOrganization:
+    - filter: note:German*
+      targetDeck: German
