@@ -28,6 +28,18 @@ actions:
     - textField: PluralExample
       audioField: PluralExampleVoiceover
       noteFilter: "note:German* PluralExample:_* PluralExampleVoiceover:"
+    - textField: Infinitiv
+      audioField: InfinitivVoiceover
+      noteFilter: "note:German* Infinitiv:_* InfinitivVoiceover:"
+    - textField: InfinitivExample
+      audioField: InfinitivExampleVoiceover
+      noteFilter: "note:German* InfinitivExample:_* InfinitivExampleVoiceover:"
+    - textField: NominativSingular
+      audioField: NominativSingularVoiceover
+      noteFilter: "note:German* NominativSingular:_* NominativSingularVoiceover:"
+    - textField: NominativSingularExample
+      audioField: NominativSingularExampleVoiceover
+      noteFilter: "note:German* NominativSingularExample:_* NominativSingularExampleVoiceover:"
   noteProcessing:
     - noteFilter: "note:GermanNoun Singular:_* Gender:"
       exec:
