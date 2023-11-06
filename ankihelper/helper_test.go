@@ -275,7 +275,7 @@ func (s *EnhancerSuite) TestTTSGeneration_SingleErrorIsIgnored() {
 }
 
 func (s *EnhancerSuite) mustParse(text string) *template.Template {
-	parsed, err := ankihelperconf.ParseTextTemplate("test", text)
+	parsed, err := ankihelperconf.ParseTextTemplate("/foo/bar", "test", text)
 	s.Require().NoError(err)
 	return parsed
 }

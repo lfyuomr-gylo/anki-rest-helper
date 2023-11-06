@@ -311,7 +311,7 @@ func (e YAMLActions) Parse(configDir string) (Actions, error) {
 	}
 
 	for i, noteType := range e.NoteTypes {
-		parsed, err := noteType.Parse()
+		parsed, err := noteType.Parse(configDir)
 		if err != nil {
 			return Actions{}, errorx.Decorate(err, "invalid note type #%d", i)
 		}
@@ -441,7 +441,7 @@ type YAMLAnkiNoteType struct {
 	Templates []YAMLAnkiCardTemplate `yaml:"templates"`
 }
 
-func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
+func (t YAMLAnkiNoteType) Parse(configDir string) (AnkiNoteType, error) {
 	if err := ValidateName(t.Name); err != nil {
 		return AnkiNoteType{}, err
 	}
@@ -464,7 +464,7 @@ func (t YAMLAnkiNoteType) Parse() (AnkiNoteType, error) {
 
 	templates := make([]AnkiCardTemplate, len(t.Templates))
 	for i, tmpl := range t.Templates {
-		parsed, err := tmpl.Parse(fieldsByName)
+		parsed, err := tmpl.Parse(configDir, fieldsByName)
 		if err != nil {
 			return AnkiNoteType{}, errorx.Decorate(err, "invalid card template #%d", i)
 		}
@@ -499,7 +499,7 @@ type YAMLAnkiCardTemplate struct {
 	Back      string   `yaml:"back"`
 }
 
-func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (AnkiCardTemplate, error) {
+func (t YAMLAnkiCardTemplate) Parse(configDir string, fieldsByName map[string]AnkiNoteField) (AnkiCardTemplate, error) {
 	fields := make([]AnkiNoteField, 0, len(t.ForFields))
 	for _, fieldName := range t.ForFields {
 		field, ok := fieldsByName[fieldName]
@@ -509,15 +509,15 @@ func (t YAMLAnkiCardTemplate) Parse(fieldsByName map[string]AnkiNoteField) (Anki
 		fields = append(fields, field)
 	}
 
-	name, err := ParseTextTemplate("CardTemplateName", t.Name)
+	name, err := ParseTextTemplate(configDir, "CardTemplateName", t.Name)
 	if err != nil {
 		return AnkiCardTemplate{}, errorx.IllegalFormat.Wrap(err, "failed to parse template of card template name")
 	}
-	front, err := ParseTextTemplate("CardTemplateFront", t.Front)
+	front, err := ParseTextTemplate(configDir, "CardTemplateFront", t.Front)
 	if err != nil {
 		return AnkiCardTemplate{}, errorx.IllegalFormat.Wrap(err, "failed to parse template of card template front")
 	}
-	back, err := ParseTextTemplate("CardTemplateBack", t.Back)
+	back, err := ParseTextTemplate(configDir, "CardTemplateBack", t.Back)
 	if err != nil {
 		return AnkiCardTemplate{}, errorx.IllegalFormat.Wrap(err, "failed to parse template of card template back")
 	}
@@ -614,7 +614,7 @@ func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, er
 	var args []NoteProcessingExecArg
 	for i, arg := range e.Args {
 		if strings.Contains(arg, templateOpen) && strings.Contains(arg, templateClose) {
-			parsed, err := ParseTextTemplate(fmt.Sprintf("arg#%d", i), arg)
+			parsed, err := ParseTextTemplate(configDir, fmt.Sprintf("arg#%d", i), arg)
 			if err != nil {
 				return NoteProcessingExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse exec argument #%d", i)
 			}
@@ -630,7 +630,7 @@ func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, er
 
 	stdin := NoteProcessingExecArg{PlainString: lang.New(e.Stdin)}
 	if strings.Contains(e.Stdin, templateOpen) && strings.Contains(e.Stdin, templateClose) {
-		parsed, err := ParseTextTemplate("stdin", e.Stdin)
+		parsed, err := ParseTextTemplate(configDir, "stdin", e.Stdin)
 		if err != nil {
 			return NoteProcessingExec{}, errorx.IllegalFormat.Wrap(err, "failed to parse stdin template")
 		}

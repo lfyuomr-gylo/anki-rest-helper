@@ -13,6 +13,7 @@ anki:
   # logRequests: true
 actions:
   tts:
+    - forGeneratedNoteType: GermanVerb
     - textField: Word
       audioField: WordVoiceover
       noteFilter: "note:German* Word:_* WordVoiceover:"
@@ -28,24 +29,185 @@ actions:
     - textField: PluralExample
       audioField: PluralExampleVoiceover
       noteFilter: "note:German* PluralExample:_* PluralExampleVoiceover:"
-    - textField: Infinitiv
-      audioField: InfinitivVoiceover
-      noteFilter: "note:German* Infinitiv:_* InfinitivVoiceover:"
-    - textField: InfinitivExample
-      audioField: InfinitivExampleVoiceover
-      noteFilter: "note:German* InfinitivExample:_* InfinitivExampleVoiceover:"
     - textField: NominativSingular
       audioField: NominativSingularVoiceover
       noteFilter: "note:German* NominativSingular:_* NominativSingularVoiceover:"
     - textField: NominativSingularExample
       audioField: NominativSingularExampleVoiceover
       noteFilter: "note:German* NominativSingularExample:_* NominativSingularExampleVoiceover:"
+  noteTypes:
+    - name: GermanVerb
+      fields:
+        - name: Infinitiv
+          vars:
+            pronoun: ""
+        - name: InfinitivExample
+
+        - name: Explanation
+          skipVoiceover: true
+        - name: Synonyms
+          skipVoiceover: true
+
+        - name: IndicativPraesensIch
+          vars:
+            pronoun: "ich"
+        - name: IndicativPraesensIchExample
+        - name: IndicativPraesensDu
+          vars:
+            pronoun: "du"
+        - name: IndicativPraesensDuExample
+        - name: IndicativPraesensEr
+          vars:
+            pronoun: "er/sie/es"
+        - name: IndicativPraesensErExample
+        - name: IndicativPraesensWir
+          vars:
+            pronoun: "wir"
+        - name: IndicativPraesensWirExample
+        - name: IndicativPraesensIhr
+          vars:
+            pronoun: "ihr"
+        - name: IndicativPraesensIhrExample
+        - name: IndicativPraesensSie
+          vars:
+            pronoun: "sie/Sie"
+        - name: IndicativPraesensSieExample
+      templates:
+        - name: "$$.Field$$"
+          forFields:
+            - Infinitiv
+            - IndicativPraesensIch
+            - IndicativPraesensDu
+            - IndicativPraesensEr
+            - IndicativPraesensWir
+            - IndicativPraesensIhr
+            - IndicativPraesensSie
+          front: |
+            <div><i>{{text:Explanation}}</i></div><br>
+            
+            {{#Synonyms}}
+              <div>
+                Synonyme: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+            
+            {{#$$.Field$$Example}}
+              <br>
+              <div>
+                Beispiel:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+              </div>
+            {{/$$.Field$$Example}}
+            
+            {{type:$$.Field$$}}
+            
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+            
+                elem.innerHTML = html;
+            });
+            </script>
+          back: |
+            <div><i>{{text:Explanation}}</i></div><br>
+            
+            {{#Synonyms}}
+              <div>
+                Synonyme: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
+            
+            {{#$$.Field$$Example}}
+              <br>
+              <div>
+                Beispiel:<br><span class="mycloze">{{$$.Field$$Example}}</span> {{$$.Field$$ExampleVoiceover}}
+              </div>
+            {{/$$.Field$$Example}}
+            
+            <hr id=answer>
+            {{type:$$.Field$$}}
+            
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+
+        .cloze {
+         font-weight: bold;
+         color: blue;
+        }
   noteProcessing:
     - noteFilter: "note:GermanNoun Singular:_* Gender:"
       exec:
         command: ./scripts/deduce_german_gender.py
         args:
           - $$.Note.Fields.Singular$$
+    - noteFilter: |
+        note:GermanVerb (
+        (IndicativPraesensIch: -tag:conjugation_done:IndicativPraesensIch)
+          OR (IndicativPraesensDuExample: -tag:conjugation_done:IndicativPraesensDu)
+          OR (IndicativPraesensErExample: -tag:conjugation_done:IndicativPraesensEr)
+          OR (IndicativPraesensWirExample: -tag:conjugation_done:IndicativPraesensWir)
+          OR (IndicativPraesensIhrExample: -tag:conjugation_done:IndicativPraesensIhr)
+          OR (IndicativPraesensSieExample: -tag:conjugation_done:IndicativPraesensSie)
+        )
+      exec:
+        command: /usr/bin/env
+        args:
+          - go
+          - run
+          - $$ resolve_path "./scripts/german_word_forms.go" $$
+          - verb
+          - $$.Note.Fields.Infinitiv$$
+      minPauseBetweenExecutions: 1200ms
+      timeout: 5s
   cardsOrganization:
-    - filter: note:German*
-      targetDeck: German
+    - filter: -note:GermanVerb* note:German*
+      targetDeck: German::00_Other
+    - filter: note:GermanVerb* card:*Infinitiv*
+      targetDeck: German::01_VerbsInfinitive
+    - filter: note:GermanVerb* -card:*Infinitiv*
+      targetDeck: German::02_VerbsConjugation
