@@ -122,8 +122,8 @@ var conjugationRules = map[string]map[string]map[string]VerbConjugationRule{
 			"ich":       {"IndicativPraesensIch", 0.25, 1, isRegularPresentIndicative},
 			"du":        {"IndicativPraesensDu", 0.25, 1, isRegularPresentIndicative},
 			"er/sie/es": {"IndicativPraesensEr", 0.25, 1, isRegularPresentIndicative},
-			"ihr":       {"IndicativPraesensIhr", 0.15, 1, isRegularPresentIndicative},
 			"wir":       {"IndicativPraesensWir", 0.05, 1, isRegularPresentIndicative},
+			"ihr":       {"IndicativPraesensIhr", 0.15, 1, isRegularPresentIndicative},
 			"sie/sie":   {"IndicativPraesensSie", 0.05, 1, isRegularPresentIndicative},
 		},
 	},
@@ -183,17 +183,15 @@ func conjugateVerb(verbInfinitive string) ([]map[string]any, error) {
 				}
 
 				rnd := rand.Float64()
-				shouldSkip := rnd > rule.IrregularProbability
+				shouldSet := rnd < rule.IrregularProbability
 				if rule.IsRegular(verbInfinitive, pronounLC, verbForm) {
-					shouldSkip = rnd > rule.RegularProbability
+					shouldSet = rnd < rule.RegularProbability
 				}
-				if shouldSkip {
-					continue
+				if shouldSet {
+					commands = append(commands, map[string]any{
+						"set_field": map[string]string{rule.NoteField: verbForm},
+					})
 				}
-
-				commands = append(commands, map[string]any{
-					"set_field": map[string]string{rule.NoteField: verbForm},
-				})
 				commands = append(commands, map[string]any{
 					"add_tag": fmt.Sprintf("conjugation_done:%s", rule.NoteField),
 				})
