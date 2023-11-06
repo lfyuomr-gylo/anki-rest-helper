@@ -1,6 +1,6 @@
 module anki-rest-enhancer
 
-go 1.19
+go 1.21
 
 require (
 	github.com/joomcode/errorx v1.1.0
