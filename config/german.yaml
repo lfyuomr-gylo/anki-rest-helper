@@ -17,6 +17,9 @@ actions:
     - textField: Word
       audioField: WordVoiceover
       noteFilter: "note:German* Word:_* WordVoiceover:"
+    - textField: WordExample
+      audioField: WordExampleVoiceover
+      noteFilter: "note:German* WordExample:_* WordExampleVoiceover:"
     - textField: Singular
       audioField: SingularVoiceover
       noteFilter: "note:German* Singular:_* SingularVoiceover:"
