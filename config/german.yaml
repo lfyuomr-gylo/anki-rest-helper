@@ -207,6 +207,15 @@ actions:
           - $$.Note.Fields.Infinitiv$$
       minPauseBetweenExecutions: 1200ms
       timeout: 5s
+    # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
+    - noteFilter: note:German* Image:_* -tag:image_resized
+      exec:
+        command: ./scripts/resize_image.py
+        args:
+          - Image
+          - $$.Note.Fields.Image$$
+          - "200"
+          - image_resized
   cardsOrganization:
     - filter: -note:GermanVerb* note:German*
       targetDeck: German::00_Other
