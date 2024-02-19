@@ -3,3 +3,5 @@
 config/azure-key.txt
 
 build/
+
+.DS_Store
