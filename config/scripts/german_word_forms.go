@@ -90,19 +90,41 @@ func lookupDictEntry(word, entryCode string) (*YandexDictEntry, error) {
 }
 
 func isRegularPresentIndicative(infinitive, pronoun, conjugation string) bool {
-	expected := strings.TrimSuffix(infinitive, "en")
+	expected := strings.TrimSuffix(infinitive, "n")
+	expected = strings.TrimSuffix(expected, "e")
 	switch strings.ToLower(pronoun) {
 	case "ich":
 		expected = expected + "e"
 	case "du":
+		if strings.HasSuffix(expected, "t") {
+			expected = expected + "e"
+		}
 		expected = expected + "st"
-	case "er/sie/es", "":
+	case "er/sie/es", "ihr":
+		if strings.HasSuffix(expected, "t") {
+			expected = expected + "e"
+		}
 		expected = expected + "t"
 	case "wir", "sie/sie":
 		expected = infinitive
 	}
 
-	return expected == conjugation
+	if expected == conjugation {
+		// This is a simple regular verb
+		return true
+	}
+	if strings.Count(conjugation, " ") == 1 {
+		// This is a trennbares Verb
+		parts := strings.Split(conjugation, " ")
+		root := parts[0]
+		prefix := parts[1]
+		if expected == prefix+root {
+			// This is a regular trennbares Verb
+			return true
+		}
+	}
+
+	return false
 }
 
 type VerbConjugationRule struct {
