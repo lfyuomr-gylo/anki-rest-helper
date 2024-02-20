@@ -44,6 +44,7 @@ actions:
         - name: Infinitiv
           vars:
             pronoun: ""
+            tense: Verb im Infinitiv
         - name: InfinitivExample
 
         - name: Explanation
@@ -54,27 +55,44 @@ actions:
         - name: IndicativPraesensIch
           vars:
             pronoun: "ich"
+            tense: Verb im Präsens
         - name: IndicativPraesensIchExample
         - name: IndicativPraesensDu
           vars:
             pronoun: "du"
+            tense: Verb im Präsens
         - name: IndicativPraesensDuExample
         - name: IndicativPraesensEr
           vars:
             pronoun: "er/sie/es"
+            tense: Verb im Präsens
         - name: IndicativPraesensErExample
         - name: IndicativPraesensWir
           vars:
             pronoun: "wir"
+            tense: Verb im Präsens
         - name: IndicativPraesensWirExample
         - name: IndicativPraesensIhr
           vars:
             pronoun: "ihr"
+            tense: Verb im Präsens
         - name: IndicativPraesensIhrExample
         - name: IndicativPraesensSie
           vars:
             pronoun: "sie/Sie"
+            tense: Verb im Präsens
         - name: IndicativPraesensSieExample
+
+        - name: ImperativDu
+          vars:
+            pronoun: "du"
+            tense: Verb im Imperativ
+        - name: ImperativDuExample
+        - name: ImperativIhr
+          vars:
+            pronoun: "ihr"
+            tense: Verm im Imperativ
+        - name: ImperativIhrExample
       templates:
         - name: "$$.Field$$"
           forFields:
@@ -85,7 +103,11 @@ actions:
             - IndicativPraesensWir
             - IndicativPraesensIhr
             - IndicativPraesensSie
+            - ImperativDu
+            - ImperativIhr
           front: |
+            <h2>$$.Vars.tense$$</h2>
+            
             <div><i>{{text:Explanation}}</i></div><br>
             
             {{#Synonyms}}
@@ -125,6 +147,8 @@ actions:
             });
             </script>
           back: |
+            <h2>$$.Vars.tense$$</h2>
+            
             <div><i>{{text:Explanation}}</i></div><br>
             
             {{#Synonyms}}
@@ -191,11 +215,13 @@ actions:
     - noteFilter: |
         note:GermanVerb (
         (IndicativPraesensIch: -tag:conjugation_done:IndicativPraesensIch)
-          OR (IndicativPraesensDuExample: -tag:conjugation_done:IndicativPraesensDu)
-          OR (IndicativPraesensErExample: -tag:conjugation_done:IndicativPraesensEr)
-          OR (IndicativPraesensWirExample: -tag:conjugation_done:IndicativPraesensWir)
-          OR (IndicativPraesensIhrExample: -tag:conjugation_done:IndicativPraesensIhr)
-          OR (IndicativPraesensSieExample: -tag:conjugation_done:IndicativPraesensSie)
+          OR (IndicativPraesensDu: -tag:conjugation_done:IndicativPraesensDu)
+          OR (IndicativPraesensEr: -tag:conjugation_done:IndicativPraesensEr)
+          OR (IndicativPraesensWir: -tag:conjugation_done:IndicativPraesensWir)
+          OR (IndicativPraesensIhr: -tag:conjugation_done:IndicativPraesensIhr)
+          OR (IndicativPraesensSie: -tag:conjugation_done:IndicativPraesensSie)
+          OR (ImperativDu: -tag:conjugation_done:ImperativDu)
+          OR (ImperativIhr: -tag:conjugation_done:ImperativIhr)
         )
       exec:
         command: /usr/bin/env
@@ -205,6 +231,7 @@ actions:
           - $$ resolve_path "./scripts/german_word_forms.go" $$
           - verb
           - $$.Note.Fields.Infinitiv$$
+          - $$ .Note.Tags | to_json $$
       minPauseBetweenExecutions: 1200ms
       timeout: 5s
     # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.

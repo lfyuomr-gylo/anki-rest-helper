@@ -1,9 +1,10 @@
 // Usage:
-//   go run ./german_word_forms.go 'word type' 'word'
+//   go run ./german_word_forms.go 'word type' 'word' '["tag1", "tag2"]'
 
 package main
 
 import (
+	"anki-rest-enhancer/util/lang/set"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -127,6 +128,11 @@ func isRegularPresentIndicative(infinitive, pronoun, conjugation string) bool {
 	return false
 }
 
+func isRegularImperative(infinitive, pronoun, conjugation string) bool {
+	// TODO: implement this function
+	return false
+}
+
 type VerbConjugationRule struct {
 	// NoteField is the field which the conjugation form should be written in the Anki Note
 	NoteField string
@@ -148,6 +154,10 @@ var conjugationRules = map[string]map[string]map[string]VerbConjugationRule{
 			"ihr":       {"IndicativPraesensIhr", 0.15, 1, isRegularPresentIndicative},
 			"sie/sie":   {"IndicativPraesensSie", 0.05, 1, isRegularPresentIndicative},
 		},
+		"Imperativ": {
+			"du":  {"ImperativDu", 0.5, 1, isRegularImperative},
+			"ihr": {"ImperativIhr", 0.5, 1, isRegularImperative},
+		},
 	},
 }
 
@@ -162,7 +172,7 @@ func parseRawConjugation(raw string) (pronounLC, verbForm string) {
 	return pronounLC, verbForm
 }
 
-func conjugateVerb(verbInfinitive string) ([]map[string]any, error) {
+func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]map[string]any, error) {
 	var commands []map[string]any
 
 	entry, err := lookupDictEntry(verbInfinitive, entryCodeVerb)
@@ -204,6 +214,33 @@ func conjugateVerb(verbInfinitive string) ([]map[string]any, error) {
 					continue
 				}
 
+				// Execute the rule
+
+				// In case there are alternative conjugation forms, try to pick the regular one
+				if strings.Contains(verbForm, ",") {
+					hasRegularForm := false
+					for _, variant := range strings.Split(verbForm, ",") {
+						variant = strings.TrimSpace(variant)
+						if rule.IsRegular(verbInfinitive, pronounLC, variant) {
+							verbForm = variant
+							hasRegularForm = true
+							break
+						}
+					}
+					if !hasRegularForm {
+						verbForm = strings.Split(verbForm, ",")[0]
+					}
+				}
+
+				tag := fmt.Sprintf("conjugation_done:%s", rule.NoteField)
+				if tags.Contains(tag) {
+					// the tag for this rule has already been set, do not execute it again
+					continue
+				}
+				commands = append(commands, map[string]any{
+					"add_tag": tag,
+				})
+
 				rnd := rand.Float64()
 				shouldSet := rnd < rule.IrregularProbability
 				if rule.IsRegular(verbInfinitive, pronounLC, verbForm) {
@@ -214,9 +251,6 @@ func conjugateVerb(verbInfinitive string) ([]map[string]any, error) {
 						"set_field": map[string]string{rule.NoteField: verbForm},
 					})
 				}
-				commands = append(commands, map[string]any{
-					"add_tag": fmt.Sprintf("conjugation_done:%s", rule.NoteField),
-				})
 			}
 		}
 	}
@@ -224,7 +258,7 @@ func conjugateVerb(verbInfinitive string) ([]map[string]any, error) {
 }
 
 func main() {
-	if len(os.Args) != 3 {
+	if len(os.Args) != 4 {
 		log.Fatalf("Unexpected number of CLI argumnets, expected 2 but got: %d", len(os.Args)-1)
 	}
 
@@ -232,7 +266,12 @@ func main() {
 	var err error
 	switch os.Args[1] {
 	case "verb":
-		commands, err = conjugateVerb(os.Args[2])
+		var tags []string
+		if err := json.Unmarshal([]byte(os.Args[3]), &tags); err != nil {
+			log.Fatalf("Failed to parse note tags: %v", err)
+		}
+
+		commands, err = conjugateVerb(os.Args[2], set.FromSlice(tags...))
 	default:
 		log.Fatalf("Unexpected word type: %q", os.Args[1])
 	}
