@@ -140,7 +140,7 @@ The configuration above tels the tool to
    Supported modification commands:
 
     - `{"set_field": {"field": "value"}}`
-    - `{"set_field_if_not_empty": {"field": "value"}}`
+    - `{"set_field_if_empty": {"field": "value"}}`
     - `{"add_tag": "tag"}`
 
 Stdin and args may be plain text or [go templates](https://pkg.go.dev/text/template) with `$$` used as a delimiter.

@@ -395,9 +395,9 @@ func (h Helper) applyProcessingRule(ctx context.Context, rule ankihelperconf.Not
 
 type noteProcessingModification struct {
 	// oneof
-	SetField           *map[string]string `json:"set_field"`
-	SetFieldIfNotEmpty *map[string]string `json:"set_field_if_not_empty"`
-	AddTag             *string            `json:"add_tag"`
+	SetField        *map[string]string `json:"set_field"`
+	SetFieldIfEmpty *map[string]string `json:"set_field_if_empty"`
+	AddTag          *string            `json:"add_tag"`
 }
 
 func (m noteProcessingModification) Validate() error {
@@ -408,7 +408,7 @@ func (m noteProcessingModification) Validate() error {
 	if m.AddTag != nil {
 		fieldsSet++
 	}
-	if m.SetFieldIfNotEmpty != nil {
+	if m.SetFieldIfEmpty != nil {
 		fieldsSet++
 	}
 
@@ -494,8 +494,8 @@ func (h Helper) processNote(
 			for field, value := range *modification.SetField {
 				fieldUpdates[field] = ankiconnect.FieldUpdate{Value: lang.New(value)}
 			}
-		case modification.SetFieldIfNotEmpty != nil:
-			for field, value := range *modification.SetFieldIfNotEmpty {
+		case modification.SetFieldIfEmpty != nil:
+			for field, value := range *modification.SetFieldIfEmpty {
 				if note.Fields[field] == "" {
 					fieldUpdates[field] = ankiconnect.FieldUpdate{Value: lang.New(value)}
 				}
