@@ -73,3 +73,19 @@ func TestParseRawConjugation(t *testing.T) {
 		})
 	}
 }
+
+func TestProcessNounForm(t *testing.T) {
+	for idx, tc := range []struct {
+		word, form, want string
+	}{
+		{"Saft", "(ein/der) Saft", "der Saft"},
+		{"Saft", "(eines/des) Saftes, Safts", "des Safts"},
+		{"Buch", "(einem/dem) Buch, Buche", "dem Buch"},
+	} {
+		t.Run(fmt.Sprintf("Case_%02d", idx), func(t *testing.T) {
+			if got := processNounForm(tc.word, tc.form); got != tc.want {
+				t.Errorf("processNounForm(%q, %q) = %q, want %q", tc.word, tc.form, got, tc.want)
+			}
+		})
+	}
+}

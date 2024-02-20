@@ -4,7 +4,9 @@
 package main
 
 import (
+	"anki-rest-enhancer/util/lang/mapx"
 	"anki-rest-enhancer/util/lang/set"
+	"anki-rest-enhancer/util/lang/slicex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,6 +14,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -19,6 +23,8 @@ const (
 	entryCodeNoun = "nn"
 	entryCodeVerb = "vrb"
 )
+
+type ankiCommand = map[string]any
 
 type YandexLookupResult struct {
 	// Entry in the 'de-ru' dictionary
@@ -172,8 +178,8 @@ func parseRawConjugation(raw string) (pronounLC, verbForm string) {
 	return pronounLC, verbForm
 }
 
-func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]map[string]any, error) {
-	var commands []map[string]any
+func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]ankiCommand, error) {
+	var commands []ankiCommand
 
 	entry, err := lookupDictEntry(verbInfinitive, entryCodeVerb)
 	if err != nil {
@@ -237,7 +243,7 @@ func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]map[string]an
 					// the tag for this rule has already been set, do not execute it again
 					continue
 				}
-				commands = append(commands, map[string]any{
+				commands = append(commands, ankiCommand{
 					"add_tag": tag,
 				})
 
@@ -247,7 +253,7 @@ func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]map[string]an
 					shouldSet = rnd < rule.RegularProbability
 				}
 				if shouldSet {
-					commands = append(commands, map[string]any{
+					commands = append(commands, ankiCommand{
 						"set_field": map[string]string{rule.NoteField: verbForm},
 					})
 				}
@@ -257,21 +263,128 @@ func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]map[string]an
 	return commands, nil
 }
 
+// Header -> Field name
+var nounFormFields = map[string]struct {
+	fieldName   string
+	probability float64
+}{
+	// Nominativ is always manually specified in the card, so we should not overwrite it
+	"Nominativ": {"SingularNominativ", 0},
+	"Genitiv":   {"SingularGenitiv", 0.5},
+	"Dativ":     {"SingularDativ", 0.5},
+	"Akkusativ": {"SingularAkkusativ", 0.5},
+}
+
+var nounFormPattern = regexp.MustCompile(`^\([^/]+/(?P<defArt>[^ ]+)\) (?P<noun>.+)$`)
+
+// processNounForm removes undefined article from the form:
+//
+// processNounForm("Saft", "(ein/der) Saft") == "der Saft"
+func processNounForm(word, form string) string {
+	if form == "" || form == "-" {
+		return ""
+	}
+
+	// TODO: do not panic if the form doesn't match the pattern
+	submatch := nounFormPattern.FindStringSubmatch(form)
+	article := submatch[nounFormPattern.SubexpIndex("defArt")]
+	noun := submatch[nounFormPattern.SubexpIndex("noun")]
+
+	if strings.Contains(noun, ",") {
+		// There are multiple possible forms of the word.
+		// In this case, we prefer the simple form if it's available, i.e.
+		//    (einem/dem) Saft, Safte -> dem Saft
+		//    (eines/des) Buchs, Buches -> des Buchs
+		options := strings.Split(noun, ", ")
+		switch {
+		case article == "des" && slices.Contains(options, word+"s"):
+			noun = word + "s"
+		case article != "des" && slices.Contains(options, word):
+			noun = word
+		default:
+			// nop -- leave all options as is
+		}
+	}
+
+	return article + " " + noun
+}
+
+func addNounForms(noun string, tags set.Set[string]) ([]ankiCommand, error) {
+	var commands []ankiCommand
+
+	dictEntry, err := lookupDictEntry(noun, entryCodeNoun)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up %q in Yandex.Dict: %w", noun, err)
+	}
+
+	entryData := dictEntry.Prdg.Data
+	if got := len(entryData); got != 1 {
+		return nil, fmt.Errorf("unexpected number of data entries for noun %q: expected 1 but got %d", noun, got)
+	}
+	entryTables := entryData[0].Tables
+	if got := len(entryTables); got != 1 {
+		return nil, fmt.Errorf("unexpected number of tables for noun %q: expected 1 but got %d", noun, got)
+	}
+
+	formsTable := entryTables[0]
+	if want := mapx.Keys(nounFormFields); !slicex.SameElements(formsTable.Headers, want) {
+		return nil, fmt.Errorf("unexpected table headers: want %q, got %q", want, formsTable.Headers)
+	}
+	forms := formsTable.Rows
+	if got, want := len(forms), len(formsTable.Headers); want != got {
+		return nil, fmt.Errorf("unexpected number of elements in the row: want %d, got %d", want, got)
+	}
+
+	for idx, form := range forms {
+		if got := len(form); got != /* singular, plural */ 2 {
+			return nil, fmt.Errorf("unecpected number of forms in line %d: want 2, got: %d", idx, got)
+		}
+		singForm := form[0]
+
+		rule := nounFormFields[formsTable.Headers[idx]]
+		tag := "noun_form:" + rule.fieldName
+		if tags.Contains(tag) {
+			// The field has already been set
+			continue
+		}
+		commands = append(commands, ankiCommand{
+			"add_tag": tag,
+		})
+
+		rnd := rand.Float64()
+		if rnd >= rule.probability {
+			continue
+		}
+
+		processed := processNounForm(dictEntry.Text, singForm)
+		if processed == "" {
+			// the form is undefined
+			continue
+		}
+		commands = append(commands, ankiCommand{
+			"set_field": map[string]string{rule.fieldName: processed},
+		})
+	}
+	return commands, nil
+}
+
 func main() {
 	if len(os.Args) != 4 {
 		log.Fatalf("Unexpected number of CLI argumnets, expected 2 but got: %d", len(os.Args)-1)
 	}
+	var tagList []string
+	if err := json.Unmarshal([]byte(os.Args[3]), &tagList); err != nil {
+		log.Fatalf("Failed to parse note tags: %v", err)
+	}
+	tags := set.FromSlice(tagList...)
 
 	var commands any
 	var err error
 	switch os.Args[1] {
 	case "verb":
-		var tags []string
-		if err := json.Unmarshal([]byte(os.Args[3]), &tags); err != nil {
-			log.Fatalf("Failed to parse note tags: %v", err)
-		}
-
-		commands, err = conjugateVerb(os.Args[2], set.FromSlice(tags...))
+		commands, err = conjugateVerb(os.Args[2], tags)
+	case "noun":
+		commands, err = addNounForms(os.Args[2], tags)
 	default:
 		log.Fatalf("Unexpected word type: %q", os.Args[1])
 	}
