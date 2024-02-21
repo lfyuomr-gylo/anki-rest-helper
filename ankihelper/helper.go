@@ -464,7 +464,7 @@ func (h Helper) processNote(
 		defer cancel()
 		cmdCtx = ctx
 	}
-	log.Printf("Executing note processing command [%d/%d]: %s %s", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, " "))
+	log.Printf("Executing note processing command [%d/%d]: %s '%s'", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, "' '"))
 	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, execx.Params{
 		Command: rule.Exec.Command,
 		Args:    args,

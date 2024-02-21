@@ -14,6 +14,7 @@ anki:
 actions:
   tts:
     - forGeneratedNoteType: GermanVerb
+    - forGeneratedNoteType: GermanNoun
     - textField: Word
       audioField: WordVoiceover
       noteFilter: "note:German* Word:_* WordVoiceover:"
@@ -206,14 +207,240 @@ actions:
          font-weight: bold;
          color: blue;
         }
+    - name: GermanNoun
+      fields:
+        - name: Explanation
+          skipVoiceover: true
+        - name: Synonyms
+          skipVoiceover: true
+
+        - name: SingularNominativ
+          vars:
+            preposition: ""
+            case: |
+              <div class="singular">Einzahl Substantiv im Nominativ</div>
+        - name: SingularNominativExample
+        - name: PluralNominativ
+          vars:
+            preposition: ""
+            case: |
+              <div class="plural">Plural Substantiv im Nominativ</div>
+        - name: PluralNominativExample
+
+        - name: Image
+          skipVoiceover: true
+
+
+        - name: SingularAkkusativ
+          vars:
+            preposition: "ich habe"
+            case: |
+              <div class="singular">Einzahl Substantiv im Akkusativ</div>
+        - name: SingularAkkusativExample
+        - name: SingularDativ
+          vars:
+            preposition: "mit"
+            case: |
+              <div class="singular">Einzahl Substantiv im Dativ</div>
+        - name: SingularDativExample
+        - name: SingularGenitiv
+          vars:
+            preposition: "das Zeug"
+            case: |
+              <div class="singular">Einzahl Substantiv im Genitiv</div>
+        - name: SingularGenitivExample
+
+        - name: Gender
+          skipVoiceover: true
+      templates:
+        - name: "$$.Field$$"
+          forFields:
+            - SingularNominativ
+            - PluralNominativ
+            - SingularAkkusativ
+            - SingularDativ
+            - SingularGenitiv
+          front: |
+            $$.Vars.case$$
+
+            {{Image}}
+
+            <br>
+            <div>{{Explanation}}</div>
+
+
+            {{#Synonyms}}
+              <div>
+                Synonyme: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+            
+            $$if .Vars.preposition$$
+              <div>$$.Vars.preposition$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+            $$end$$
+
+            {{#$$.Field$$Example}}
+              <br>
+              <div>
+                Beispiel:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+              </div>
+            {{/$$.Field$$Example}}
+
+            {{type:$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+
+          back: |
+            $$.Vars.case$$
+            
+            <div>
+                $$.Vars.preposition$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>
+
+            	{{#Gender}}
+            		<span class="gender">
+              		<span class="{{Gender}}">[{{Gender}}]</span>
+            		</span>
+            	{{/Gender}}
+            	{{$$.Field$$Voiceover}}
+            </div>
+
+            {{Image}}
+
+            <div>{{Explanation}}</div>
+
+            {{#Synonyms}}
+            	<br>
+              <div>
+                Synonyme: {{Synonyms}}
+              </div>
+            {{/Synonyms}}
+
+            {{#$$.Field$$Example}}
+            	<br>
+              <div>
+                Beispiel:<br><span class="mycloze">{{$$.Field$$Example}}</span>{{$$.Field$$ExampleVoiceover}}
+              </div>
+            {{/$$.Field$$Example}}
+
+            <hr id="answer">
+
+            {{type:$$.Field$$}}
+
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+
+        .cloze {
+          font-weight: bold;
+          color: blue;
+        }
+
+        .gender{
+          font-style: italic;
+          font-size: 60%;
+        }
+
+        .Maskulinum {
+        	font-weight: bold;
+          color: blue;
+        }
+
+        .Femininum {
+        	font-weight: bold;
+          color: hotpink;
+        }
+
+        .Neutrum {
+          font-weight: bold;
+          color: green;
+        }
+
+        .singular {
+          font-style: italic;
+        }
+
+        .plural {
+          font-style: normal;
+          font-weight: bold;
+        }
+
   noteProcessing:
-    - noteFilter: "note:GermanNoun Singular:_* Gender:"
+    - noteFilter: "note:GermanNoun SingularNominativ:_* Gender:"
       exec:
         command: ./scripts/deduce_german_gender.py
         args:
-          - $$.Note.Fields.Singular$$
+          - $$.Note.Fields.SingularNominativ$$
     - noteFilter: |
-        note:GermanVerb (
+        note:GermanNoun SingularNominativ:_* -tag:skip_cases (
+          (SingularAkkusativ: -tag:noun_form:SingularAkkusativ)
+          OR (SingularDativ: -tag:noun_form:SingularDativ)
+          OR (SingularGenitiv: -tag:noun_form:SingularGenitiv)
+        )
+#      exec:
+#        command: echo
+#        args:
+#          - '[{"add_tag": "skip_cases"}]'
+      exec:
+        command: /usr/bin/env
+        args:
+          - go
+          - run
+          - $$ resolve_path "./scripts/german_word_forms.go" $$
+          - noun
+          - $$.Note.Fields.SingularNominativ$$
+          - $$ .Note.Tags | to_json $$
+      minPauseBetweenExecutions: 1200ms
+      timeout: 5s
+    - noteFilter: |
+        note:GermanVerb -tag:skip_conjugation (
         (IndicativPraesensIch: -tag:conjugation_done:IndicativPraesensIch)
           OR (IndicativPraesensDu: -tag:conjugation_done:IndicativPraesensDu)
           OR (IndicativPraesensEr: -tag:conjugation_done:IndicativPraesensEr)
@@ -223,6 +450,10 @@ actions:
           OR (ImperativDu: -tag:conjugation_done:ImperativDu)
           OR (ImperativIhr: -tag:conjugation_done:ImperativIhr)
         )
+#      exec:
+#        command: echo
+#        args:
+#          - '[{"add_tag": "skip_conjugation"}]'
       exec:
         command: /usr/bin/env
         args:
@@ -244,9 +475,11 @@ actions:
           - "200"
           - image_resized
   cardsOrganization:
-    - filter: -note:GermanVerb* note:German*
+    - filter: -note:GermanVerb* -card:SingularAkkusativ -card:SingularDativ -card:SingularGenetiv note:German*
       targetDeck: German::00_Other
     - filter: note:GermanVerb* card:*Infinitiv*
       targetDeck: German::01_VerbsInfinitive
     - filter: note:GermanVerb* -card:*Infinitiv*
-      targetDeck: German::02_VerbsConjugation
+      targetDeck: German::02_WordForms
+    - filter: note:GermanNoun (card:SingularAkkusativ OR card:SingularDativ OR card:SingularGenetiv)
+      targetDeck: German::02_WordForms

@@ -239,13 +239,13 @@ func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]ankiCommand, 
 				}
 
 				tag := fmt.Sprintf("conjugation_done:%s", rule.NoteField)
+				commands = append(commands, ankiCommand{
+					"add_tag": tag,
+				})
 				if tags.Contains(tag) {
 					// the tag for this rule has already been set, do not execute it again
 					continue
 				}
-				commands = append(commands, ankiCommand{
-					"add_tag": tag,
-				})
 
 				rnd := rand.Float64()
 				shouldSet := rnd < rule.IrregularProbability
@@ -362,7 +362,7 @@ func addNounForms(noun string, tags set.Set[string]) ([]ankiCommand, error) {
 			continue
 		}
 		commands = append(commands, ankiCommand{
-			"set_field": map[string]string{rule.fieldName: processed},
+			"set_field_if_empty": map[string]string{rule.fieldName: processed},
 		})
 	}
 	return commands, nil
