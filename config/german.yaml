@@ -56,42 +56,50 @@ actions:
         - name: IndicativPraesensIch
           vars:
             pronoun: "ich"
+            pronounPostfix: ""
             tense: Verb im Präsens
         - name: IndicativPraesensIchExample
         - name: IndicativPraesensDu
           vars:
             pronoun: "du"
+            pronounPostfix: ""
             tense: Verb im Präsens
         - name: IndicativPraesensDuExample
         - name: IndicativPraesensEr
           vars:
             pronoun: "er/sie/es"
+            pronounPostfix: ""
             tense: Verb im Präsens
         - name: IndicativPraesensErExample
         - name: IndicativPraesensWir
           vars:
             pronoun: "wir"
+            pronounPostfix: ""
             tense: Verb im Präsens
         - name: IndicativPraesensWirExample
         - name: IndicativPraesensIhr
           vars:
             pronoun: "ihr"
+            pronounPostfix: ""
             tense: Verb im Präsens
         - name: IndicativPraesensIhrExample
         - name: IndicativPraesensSie
           vars:
             pronoun: "sie/Sie"
+            pronounPostfix: ""
             tense: Verb im Präsens
         - name: IndicativPraesensSieExample
 
         - name: ImperativDu
           vars:
-            pronoun: "du"
+            pronoun: "(du)"
+            pronounPostfix: ", bitte"
             tense: Verb im Imperativ
         - name: ImperativDuExample
         - name: ImperativIhr
           vars:
-            pronoun: "ihr"
+            pronoun: "(ihr)"
+            pronounPostfix: ", bitte"
             tense: Verm im Imperativ
         - name: ImperativIhrExample
       templates:
@@ -117,7 +125,7 @@ actions:
               </div>
             {{/Synonyms}}
 
-            <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b>$$.Vars.pronounPostfix$$</div>
             
             {{#$$.Field$$Example}}
               <br>
@@ -158,7 +166,7 @@ actions:
               </div>
             {{/Synonyms}}
 
-            <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>$$.Vars.pronounPostfix$${{$$.FieldVoiceover$$}}</div>
             
             {{#$$.Field$$Example}}
               <br>
