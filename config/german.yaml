@@ -483,11 +483,11 @@ actions:
           - "200"
           - image_resized
   cardsOrganization:
-    - filter: -note:GermanVerb* -card:SingularAkkusativ -card:SingularDativ -card:SingularGenetiv note:German*
+    - filter: -note:GermanVerb* -card:SingularAkkusativ -card:SingularDativ -card:SingularGenitiv note:German*
       targetDeck: German::00_Other
     - filter: note:GermanVerb* card:*Infinitiv*
       targetDeck: German::01_VerbsInfinitive
     - filter: note:GermanVerb* -card:*Infinitiv*
       targetDeck: German::02_WordForms
-    - filter: note:GermanNoun (card:SingularAkkusativ OR card:SingularDativ OR card:SingularGenetiv)
+    - filter: note:GermanNoun (card:SingularAkkusativ OR card:SingularDativ OR card:SingularGenitiv)
       targetDeck: German::02_WordForms
