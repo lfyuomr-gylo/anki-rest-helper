@@ -8,6 +8,7 @@ import (
 	"anki-rest-enhancer/util/lang/set"
 	"anki-rest-enhancer/util/lang/slicex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -22,6 +23,15 @@ import (
 const (
 	entryCodeNoun = "nn"
 	entryCodeVerb = "vrb"
+
+	// special value to indicate that the target row of the conjugation table
+	// contains only one entry, and that this entry should be taken as is.
+	pronounTakeOnlyEntry = "$TAKE_ONLY_ENTRY$"
+)
+
+var (
+	ErrNoDictEntries       = errors.New("no dict entries")
+	ErrMultipleDictEntries = errors.New("too many dict entries")
 )
 
 type ankiCommand = map[string]any
@@ -90,10 +100,14 @@ func lookupDictEntry(word, entryCode string) (*YandexDictEntry, error) {
 	}
 	entries = entries[:foundNo]
 
-	if foundNo != 1 {
-		return nil, fmt.Errorf("unexpected number of dict entries of type %q: expected 1 but found %d", entryCode, foundNo)
+	switch foundNo {
+	case 0:
+		return nil, ErrNoDictEntries
+	case 1:
+		return &entries[0], nil
+	default:
+		return nil, fmt.Errorf("%w: got %d, expected 1", ErrMultipleDictEntries, foundNo)
 	}
-	return &entries[0], nil
 }
 
 func isRegularPresentIndicative(infinitive, pronoun, conjugation string) bool {
@@ -134,7 +148,7 @@ func isRegularPresentIndicative(infinitive, pronoun, conjugation string) bool {
 	return false
 }
 
-func isRegularImperative(infinitive, pronoun, conjugation string) bool {
+func isRegularImperative(_, _, _ string) bool {
 	// TODO: implement this function
 	return false
 }
@@ -152,6 +166,11 @@ type VerbConjugationRule struct {
 // Tab -> Header -> Pronoun -> conjugation rule
 var conjugationRules = map[string]map[string]map[string]VerbConjugationRule{
 	"настоящее": {
+		"Infinitiv": {
+			pronounTakeOnlyEntry: {"Infinitiv", 1, 1, func(_, _, _ string) bool {
+				return true
+			}},
+		},
 		"Indikativ Präsens": {
 			"ich":       {"IndicativPraesensIch", 0.25, 1, isRegularPresentIndicative},
 			"du":        {"IndicativPraesensDu", 0.25, 1, isRegularPresentIndicative},
@@ -186,8 +205,13 @@ func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]ankiCommand, 
 		return nil, err
 	}
 
-	if cnt := len(entry.Prdg.Data); cnt != 1 {
-		return nil, fmt.Errorf("expected prdg.data array to have one entry but got %d", cnt)
+	switch cnt := len(entry.Prdg.Data); cnt {
+	case 0:
+		return nil, fmt.Errorf("%w: expected prdg.data array is empty", ErrNoDictEntries)
+	case 1:
+	// ok -- continue execution
+	default:
+		return nil, fmt.Errorf("%w: expected prdg.data array to have one entry but got %d", ErrMultipleDictEntries, cnt)
 	}
 	conjugation := entry.Prdg.Data[0]
 	for _, table := range conjugation.Tables {
@@ -203,6 +227,16 @@ func conjugateVerb(verbInfinitive string, tags set.Set[string]) ([]ankiCommand, 
 			columnRules, ok := tableRules[columnName]
 			if !ok {
 				// There are no conjugation rules for this column, skip it
+				continue
+			}
+
+			if rule, ok := columnRules[pronounTakeOnlyEntry]; ok {
+				if len(rows) != 1 {
+					continue
+				}
+				commands = append(commands, ankiCommand{
+					"set_field": map[string]string{rule.NoteField: rows[0]},
+				})
 				continue
 			}
 
@@ -368,6 +402,26 @@ func addNounForms(noun string, tags set.Set[string]) ([]ankiCommand, error) {
 	return commands, nil
 }
 
+func findFieldSetting(commands []ankiCommand, field string) (string, bool) {
+	var foundValue string
+	var valueFound bool
+	for _, command := range commands {
+		// expected command format: {"COMMAND_KEY": {"FIELD_NAME": "FIELD_VALUE"}}
+		for _, commandKey := range []string{"set_field", "set_field_if_empty"} {
+			if rawSetCommand, ok := command[commandKey]; ok {
+				if setCommand, ok := rawSetCommand.(map[string]string); ok && len(setCommand) == 1 {
+					settingField := mapx.Keys(setCommand)[0]
+					if settingField == field {
+						foundValue = setCommand[settingField]
+						valueFound = true
+					}
+				}
+			}
+		}
+	}
+	return foundValue, valueFound
+}
+
 func main() {
 	if len(os.Args) != 4 {
 		log.Fatalf("Unexpected number of CLI argumnets, expected 2 but got: %d", len(os.Args)-1)
@@ -378,11 +432,23 @@ func main() {
 	}
 	tags := set.FromSlice(tagList...)
 
-	var commands any
+	var commands []ankiCommand
 	var err error
 	switch os.Args[1] {
 	case "verb":
-		commands, err = conjugateVerb(os.Args[2], tags)
+		verbInfinitive := os.Args[2]
+		commands, err = conjugateVerb(verbInfinitive, tags)
+		if errors.Is(err, ErrNoDictEntries) && strings.HasPrefix(verbInfinitive, "sich ") {
+			// lookup for reflexive verbs may not work when 'sich' is included in the search query,
+			// so we retry with removing 'sich'.
+			commands, err = conjugateVerb(strings.TrimPrefix(verbInfinitive, "sich "), tags)
+		}
+		if foundInfinitive, ok := findFieldSetting(commands, "Infinitiv"); !ok || foundInfinitive != verbInfinitive {
+			log.Fatalf(
+				"Verb conjugation produced unexpected infinitive setting. got: (%q, %v), expected (%q, true)",
+				foundInfinitive, ok, verbInfinitive,
+			)
+		}
 	case "noun":
 		commands, err = addNounForms(os.Args[2], tags)
 	default:
