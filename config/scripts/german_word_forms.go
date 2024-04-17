@@ -148,6 +148,43 @@ func isRegularPresentIndicative(infinitive, pronoun, conjugation string) bool {
 	return false
 }
 
+func isRegularPreterite(infinitive string, pronoun string, conjugation string) bool {
+	expected := strings.TrimSuffix(infinitive, "n")
+	expected = strings.TrimSuffix(expected, "e")
+	if len(expected) > 0 {
+		switch expected[len(expected)-1] {
+		case 'd', 't', 'm', 'n':
+			expected = expected + "e"
+		default:
+			// nop
+		}
+	}
+	switch strings.ToLower(pronoun) {
+	case "ich", "er/sie/es":
+		expected = expected + "te"
+	case "du":
+		expected = expected + "test"
+	case "ihr":
+		expected = expected + "tet"
+	case "wir", "sie/sie":
+		expected = expected + "ten"
+	}
+
+	if expected == conjugation {
+		return true
+	}
+	if strings.Count(conjugation, " ") == 1 {
+		// handle trennbare Verben
+		parts := strings.Split(conjugation, " ")
+		root := parts[0]
+		prefix := parts[1]
+		if expected == prefix+root {
+			return true
+		}
+	}
+	return false
+}
+
 func isRegularImperative(_, _, _ string) bool {
 	// TODO: implement this function
 	return false
@@ -182,6 +219,16 @@ var conjugationRules = map[string]map[string]map[string]VerbConjugationRule{
 		"Imperativ": {
 			"du":  {"ImperativDu", 0.5, 1, isRegularImperative},
 			"ihr": {"ImperativIhr", 0.5, 1, isRegularImperative},
+		},
+	},
+	"прошедшее": {
+		"Präteritum": {
+			"ich":       {"PraeteritumIch", 0.25, 1, isRegularPreterite},
+			"du":        {"PraeteritumDu", 0.25, 1, isRegularPreterite},
+			"er/sie/es": {"PraeteritumEr", 0.25, 1, isRegularPreterite},
+			"wir":       {"PraeteritumWir", 0.05, 1, isRegularPreterite},
+			"ihr":       {"PraeteritumIhr", 0.15, 1, isRegularPreterite},
+			"sie/sie":   {"PraeteritumSie", 0.05, 1, isRegularPreterite},
 		},
 	},
 }

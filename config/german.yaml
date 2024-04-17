@@ -90,6 +90,43 @@ actions:
             tense: Verb im Präsens
         - name: IndicativPraesensSieExample
 
+        - name: PraeteritumIch
+          vars:
+            pronoun: ich
+            pronounPostfix: ""
+            tense: Verb im Präteritum
+        - name: PraeteritumIchExample
+        - name: PraeteritumDu
+          vars:
+            pronoun: du
+            pronounPostfix: ""
+            tense: Verb im Präteritum
+        - name: PraeteritumDuExample
+        - name: PraeteritumEr
+          vars:
+            pronoun: er/sie/es
+            pronounPostfix: ""
+            tense: Verb im Präteritum
+        - name: PraeteritumErExample
+        - name: PraeteritumWir
+          vars:
+            pronoun: wir
+            pronounPostfix: ""
+            tense: Verb im Präteritum
+        - name: PraeteritumWirExample
+        - name: PraeteritumIhr
+          vars:
+            pronoun: ihr
+            pronounPostfix: ""
+            tense: Verb im Präteritum
+        - name: PraeteritumIhrExample
+        - name: PraeteritumSie
+          vars:
+            pronoun: sie/Sie
+            pronounPostfix: ""
+            tense: Verb im Präteritum
+        - name: PraeteritumSieExample
+
         - name: ImperativDu
           vars:
             pronoun: "(du)"
@@ -112,6 +149,12 @@ actions:
             - IndicativPraesensWir
             - IndicativPraesensIhr
             - IndicativPraesensSie
+            - PraeteritumIch
+            - PraeteritumDu
+            - PraeteritumEr
+            - PraeteritumWir
+            - PraeteritumIhr
+            - PraeteritumSie
             - ImperativDu
             - ImperativIhr
           front: |
@@ -457,6 +500,12 @@ actions:
           OR (IndicativPraesensSie: -tag:conjugation_done:IndicativPraesensSie)
           OR (ImperativDu: -tag:conjugation_done:ImperativDu)
           OR (ImperativIhr: -tag:conjugation_done:ImperativIhr)
+          OR (PraeteritumIch: -tag:conjugation_done:PraeteritumIch)
+          OR (PraeteritumDu: -tag:conjugation_done:PraeteritumDu)
+          OR (PraeteritumEr: -tag:conjugation_done:PraeteritumEr)
+          OR (PraeteritumWir: -tag:conjugation_done:PraeteritumWir)
+          OR (PraeteritumIhr: -tag:conjugation_done:PraeteritumIhr)
+          OR (PraeteritumSie: -tag:conjugation_done:PraeteritumSie)
         )
 #      exec:
 #        command: echo
