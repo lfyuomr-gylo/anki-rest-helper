@@ -185,7 +185,7 @@ func isRegularPreterite(infinitive string, pronoun string, conjugation string) b
 	return false
 }
 
-func isRegularImperative(_, _, _ string) bool {
+func isAlwaysIrregular(_, _, _ string) bool {
 	// TODO: implement this function
 	return false
 }
@@ -217,8 +217,8 @@ var conjugationRules = map[string]map[string]map[string]VerbConjugationRule{
 			"sie/sie":   {"IndicativPraesensSie", 0.05, 1, isRegularPresentIndicative},
 		},
 		"Imperativ": {
-			"du":  {"ImperativDu", 0.5, 1, isRegularImperative},
-			"ihr": {"ImperativIhr", 0.5, 1, isRegularImperative},
+			"du":  {"ImperativDu", 0.5, 1, isAlwaysIrregular},
+			"ihr": {"ImperativIhr", 0.5, 1, isAlwaysIrregular},
 		},
 	},
 	"прошедшее": {
@@ -229,6 +229,9 @@ var conjugationRules = map[string]map[string]map[string]VerbConjugationRule{
 			"wir":       {"PraeteritumWir", 0.05, 1, isRegularPreterite},
 			"ihr":       {"PraeteritumIhr", 0.15, 1, isRegularPreterite},
 			"sie/sie":   {"PraeteritumSie", 0.05, 1, isRegularPreterite},
+		},
+		"Perfekt": {
+			"ich": {"PerfektIch", 1, 1, isAlwaysIrregular},
 		},
 	},
 }
