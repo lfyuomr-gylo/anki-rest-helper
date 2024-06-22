@@ -1,6 +1,7 @@
 .idea/
 
 config/azure-key.txt
+config/chatgpt-key.txt
 
 build/
 
