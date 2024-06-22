@@ -2,6 +2,7 @@
 
 config/azure-key.txt
 config/chatgpt-key.txt
+tool_out.json
 
 build/
 

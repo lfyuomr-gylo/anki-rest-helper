@@ -5,6 +5,7 @@ import (
 	"anki-rest-enhancer/ankihelper"
 	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
+	"encoding/json"
 	"flag"
 	"github.com/joomcode/errorx"
 	"log"
@@ -13,6 +14,8 @@ import (
 )
 
 var flagConfigPath = flag.String("config", "", "path to config file")
+var flagPrintConfig = flag.Bool("print-config", false, "whether the internal representation of the config should be printed once it's loaded")
+var flagNoOp = flag.Bool("noop", false, "if this flag is set to true, tool exits after the config is loaded (and optionally printed)")
 
 func main() {
 	flag.Parse()
@@ -34,7 +37,25 @@ func doMain() error {
 		return err
 	}
 
+	if *flagPrintConfig {
+		if err := printConfig(conf); err != nil {
+			return err
+		}
+	}
+	if *flagNoOp {
+		return nil
+	}
+
 	return runConfig(conf)
+}
+
+func printConfig(conf ankihelperconf.Config) error {
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(conf); err != nil {
+		return errorx.Decorate(err, "failed to dump internal config representation")
+	}
+	return nil
 }
 
 func runConfig(conf ankihelperconf.Config) error {
