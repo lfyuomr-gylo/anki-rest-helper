@@ -137,7 +137,7 @@ The configuration above tels the tool to
    ]
    ```
 
-   Supported modification commands:
+   Supported modification commands (full list is defined in [Modification](noteprocessing/scriptapi.go) struct):
 
     - `{"set_field": {"field": "value"}}`
     - `{"set_field_if_empty": {"field": "value"}}`

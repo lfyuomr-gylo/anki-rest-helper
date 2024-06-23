@@ -5,6 +5,7 @@ import (
 	"anki-rest-enhancer/ankihelper"
 	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
+	"anki-rest-enhancer/noteprocessing"
 	"encoding/json"
 	"flag"
 	"github.com/joomcode/errorx"
@@ -71,7 +72,8 @@ func runConfig(conf ankihelperconf.Config) error {
 
 	azureTTS := azuretts.NewAPI(conf.Azure)
 	ankiConnect := ankiconnect.NewAPI(conf.Anki)
-	enhancer := ankihelper.NewHelper(ankiConnect, azureTTS)
+	scriptRunner := noteprocessing.NewScriptRunner()
+	enhancer := ankihelper.NewHelper(ankiConnect, azureTTS, scriptRunner)
 	return enhancer.Run(conf.Actions)
 }
 

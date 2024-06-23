@@ -4,34 +4,35 @@ import (
 	"anki-rest-enhancer/ankiconnect"
 	"anki-rest-enhancer/ankihelperconf"
 	"anki-rest-enhancer/azuretts"
+	"anki-rest-enhancer/noteprocessing"
 	"anki-rest-enhancer/ratelimit"
-	"anki-rest-enhancer/util/execx"
 	"anki-rest-enhancer/util/iox"
 	"anki-rest-enhancer/util/lang"
 	"anki-rest-enhancer/util/stringx"
 	"anki-rest-enhancer/util/templatex"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"log"
 	"os"
-	"strings"
 )
 
 func NewHelper(
 	ankiConnect ankiconnect.API,
 	azureTTS azuretts.API,
+	scriptRunner noteprocessing.ScriptRunner,
 ) *Helper {
 	return &Helper{
-		ankiConnect: ankiConnect,
-		azureTTS:    azureTTS,
+		ankiConnect:  ankiConnect,
+		azureTTS:     azureTTS,
+		scriptRunner: scriptRunner,
 	}
 }
 
 type Helper struct {
-	ankiConnect ankiconnect.API
-	azureTTS    azuretts.API
+	ankiConnect  ankiconnect.API
+	azureTTS     azuretts.API
+	scriptRunner noteprocessing.ScriptRunner
 }
 
 func (h Helper) Run(conf ankihelperconf.Actions) error {
@@ -393,102 +394,28 @@ func (h Helper) applyProcessingRule(ctx context.Context, rule ankihelperconf.Not
 	return nil
 }
 
-type noteProcessingModification struct {
-	// oneof
-	SetField        *map[string]string `json:"set_field"`
-	SetFieldIfEmpty *map[string]string `json:"set_field_if_empty"`
-	AddTag          *string            `json:"add_tag"`
-}
-
-func (m noteProcessingModification) Validate() error {
-	fieldsSet := 0
-	if m.SetField != nil {
-		fieldsSet++
-	}
-	if m.AddTag != nil {
-		fieldsSet++
-	}
-	if m.SetFieldIfEmpty != nil {
-		fieldsSet++
-	}
-
-	if fieldsSet != 1 {
-		return errorx.IllegalFormat.New("invalid note modification command has %d top-level keys instead of one: %+v", fieldsSet, m)
-	}
-	return nil
-}
-
 func (h Helper) processNote(
 	ctx context.Context,
 	rule ankihelperconf.NoteProcessingRule,
 	note ankiconnect.NoteInfo,
 	noteIdx, totalNotes int,
 ) error {
-	templateContext := map[string]any{
-		"Note": map[string]any{
-			"Fields": note.Fields,
-			"Tags":   note.Tags,
-		},
+	progress := noteprocessing.ProgressInfo{
+		CurrentNoteIndex: noteIdx,
+		TotalNotesCount:  totalNotes,
 	}
-
-	args := make([]string, len(rule.Exec.Args))
-	for i, arg := range rule.Exec.Args {
-		switch {
-		case arg.PlainString != nil:
-			args[i] = *arg.PlainString
-		case arg.Template != nil:
-			var argBuilder strings.Builder
-			if err := arg.Template.Execute(&argBuilder, templateContext); err != nil {
-				return errorx.IllegalFormat.Wrap(err, "failed to substitute template in argument #%d", i)
-			}
-			args[i] = argBuilder.String()
-		}
+	noteData := noteprocessing.NoteData{
+		Fields: note.Fields,
+		Tags:   note.Tags,
 	}
-
-	var stdin string
-	switch {
-	case rule.Exec.Stdin.PlainString != nil:
-		stdin = *rule.Exec.Stdin.PlainString
-	case rule.Exec.Stdin.Template != nil:
-		var stdinBuilder strings.Builder
-		if err := rule.Exec.Stdin.Template.Execute(&stdinBuilder, templateContext); err != nil {
-			return errorx.IllegalFormat.Wrap(err, "failed to substitute template in stdin of the script")
-		}
-		stdin = stdinBuilder.String()
-	}
-
-	cmdCtx := ctx
-	if rule.Timeout > 0 {
-		// currently this context deadline is not respected by
-		ctx, cancel := context.WithTimeout(cmdCtx, rule.Timeout)
-		defer cancel()
-		cmdCtx = ctx
-	}
-	log.Printf("Executing note processing command [%d/%d]: %s '%s'", noteIdx, totalNotes, rule.Exec.Command, strings.Join(args, "' '"))
-	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, execx.Params{
-		Command: rule.Exec.Command,
-		Args:    args,
-		Stdin:   stdin,
-	})
+	modifications, err := h.scriptRunner.RunScript(ctx, rule, noteData, progress)
 	if err != nil {
-		return errorx.ExternalError.Wrap(err, "Note population command failed")
-	}
-
-	var commandOutParsed []noteProcessingModification
-	if !stringx.IsBlank(string(cmdOut)) {
-		if err := json.Unmarshal(cmdOut, &commandOutParsed); err != nil {
-			return errorx.ExternalError.Wrap(err, "Note processing command's stdout is malformed")
-		}
-		for idx, modification := range commandOutParsed {
-			if err := modification.Validate(); err != nil {
-				return errorx.Decorate(err, "Note processing command's stdout contains malformed modification #%d", idx)
-			}
-		}
+		return err
 	}
 
 	fieldUpdates := make(map[string]ankiconnect.FieldUpdate)
 	var tagsToAdd []string
-	for _, modification := range commandOutParsed {
+	for _, modification := range modifications {
 		switch {
 		case modification.SetField != nil:
 			for field, value := range *modification.SetField {
