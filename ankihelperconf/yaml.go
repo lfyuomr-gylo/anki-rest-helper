@@ -597,9 +597,10 @@ func (np YAMLNoteProcessing) Parse(configDir string) (NoteProcessingRule, error)
 }
 
 type YAMLNotesPopulationExec struct {
-	Command string   `yaml:"command"`
-	Args    []string `yaml:"args"`
-	Stdin   string   `yaml:"stdin"`
+	Command string            `yaml:"command"`
+	Args    []string          `yaml:"args"`
+	Stdin   string            `yaml:"stdin"`
+	Env     map[string]string `yaml:"env"`
 }
 
 func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, error) {
@@ -641,6 +642,7 @@ func (e YAMLNotesPopulationExec) Parse(configDir string) (NoteProcessingExec, er
 		Command: e.Command,
 		Args:    args,
 		Stdin:   stdin,
+		Env:     e.Env,
 	}, nil
 }
 

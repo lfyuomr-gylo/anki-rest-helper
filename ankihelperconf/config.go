@@ -98,6 +98,7 @@ type NoteProcessingExec struct {
 	Command string
 	Args    []NoteProcessingExecArg
 	Stdin   NoteProcessingExecArg
+	Env     map[string]string
 }
 
 type NoteProcessingExecArg struct {

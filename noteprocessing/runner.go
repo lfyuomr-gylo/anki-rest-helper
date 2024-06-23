@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"github.com/joomcode/errorx"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -28,11 +29,6 @@ func (r *scriptRunner) RunScript(
 	progress ProgressInfo,
 ) ([]Modification, error) {
 
-	args, stdin, err := r.prepareArgsAndStdin(note, rule)
-	if err != nil {
-		return nil, err
-	}
-
 	cmdCtx := ctx
 	if rule.Timeout > 0 {
 		// currently this context deadline is not respected by
@@ -40,12 +36,13 @@ func (r *scriptRunner) RunScript(
 		defer cancel()
 		cmdCtx = ctx
 	}
-	r.logRun(progress, rule.Exec.Command, args)
-	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, execx.Params{
-		Command: rule.Exec.Command,
-		Args:    args,
-		Stdin:   stdin,
-	})
+
+	params, err := r.prepareExecParams(note, rule)
+	if err != nil {
+		return nil, err
+	}
+	r.logRun(params, progress)
+	cmdOut, err := execx.RunAndCollectOutput(cmdCtx, params)
 	if err != nil {
 		return nil, errorx.ExternalError.Wrap(err, "Note population command failed")
 	}
@@ -65,7 +62,7 @@ func (r *scriptRunner) RunScript(
 	return commandOutParsed, nil
 }
 
-func (r *scriptRunner) prepareArgsAndStdin(note NoteData, rule ankihelperconf.NoteProcessingRule) ([]string, string, error) {
+func (r *scriptRunner) prepareExecParams(note NoteData, rule ankihelperconf.NoteProcessingRule) (execx.Params, error) {
 	templateData := TemplateData{Note: note}
 
 	args := make([]string, len(rule.Exec.Args))
@@ -76,7 +73,7 @@ func (r *scriptRunner) prepareArgsAndStdin(note NoteData, rule ankihelperconf.No
 		case arg.Template != nil:
 			var argBuilder strings.Builder
 			if err := arg.Template.Execute(&argBuilder, templateData); err != nil {
-				return nil, "", errorx.IllegalFormat.Wrap(err, "failed to substitute template in argument #%d", i)
+				return execx.Params{}, errorx.IllegalFormat.Wrap(err, "failed to substitute template in argument #%d", i)
 			}
 			args[i] = argBuilder.String()
 		}
@@ -89,19 +86,34 @@ func (r *scriptRunner) prepareArgsAndStdin(note NoteData, rule ankihelperconf.No
 	case rule.Exec.Stdin.Template != nil:
 		var stdinBuilder strings.Builder
 		if err := rule.Exec.Stdin.Template.Execute(&stdinBuilder, templateData); err != nil {
-			return nil, "", errorx.IllegalFormat.Wrap(err, "failed to substitute template in stdin of the script")
+			return execx.Params{}, errorx.IllegalFormat.Wrap(err, "failed to substitute template in stdin of the script")
 		}
 		stdin = stdinBuilder.String()
 	}
-	return args, stdin, nil
+
+	var env []string
+	if len(rule.Exec.Env) > 0 {
+		extraEnv := make([]string, 0, len(rule.Exec.Env))
+		for key, val := range rule.Exec.Env {
+			extraEnv = append(extraEnv, key+"="+val)
+		}
+		env = append(os.Environ(), extraEnv...)
+	}
+
+	return execx.Params{
+		Command: rule.Exec.Command,
+		Args:    args,
+		Stdin:   stdin,
+		Env:     env,
+	}, nil
 }
 
-func (r *scriptRunner) logRun(progress ProgressInfo, command string, args []string) {
+func (r *scriptRunner) logRun(params execx.Params, progress ProgressInfo) {
 	log.Printf(
 		"Executing note processing command [%d/%d]: %s '%s'",
 		progress.CurrentNoteIndex,
 		progress.TotalNotesCount,
-		command,
-		strings.Join(args, "' '"),
+		params.Command,
+		strings.Join(params.Args, "' '"),
 	)
 }

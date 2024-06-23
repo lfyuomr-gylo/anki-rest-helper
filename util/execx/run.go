@@ -11,6 +11,8 @@ type Params struct {
 	Command string
 	Args    []string
 	Stdin   string
+	// Env is passed as is to exec.Cmd
+	Env []string
 }
 
 // RunAndCollectOutput properly handles the case described in https://github.com/golang/go/issues/23019 , i.e.
@@ -20,6 +22,8 @@ func RunAndCollectOutput(ctx context.Context, params Params) ([]byte, error) {
 	if params.Stdin != "" {
 		cmd.Stdin = strings.NewReader(params.Stdin)
 	}
+	cmd.Env = params.Env
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
