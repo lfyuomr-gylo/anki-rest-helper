@@ -10,8 +10,11 @@ import (
 	"time"
 )
 
-//go:embed hang.sh
+//go:embed testdata/hang.sh
 var hangScript []byte
+
+//go:embed testdata/stderrexit.py
+var stderrExitScript []byte
 
 func TestRunAndCollectOutput_Timeout(t *testing.T) {
 	// setup:
@@ -40,6 +43,22 @@ func TestRunAndCollectOutput_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "foo\n", string(output))
 }
+
+func TestRunAndCollectOutput_ErrorContainsStderrOnBadExitStatus(t *testing.T) {
+	// setup:
+	scriptFileName := writeIntoTmp(t, stderrExitScript)
+	defer func() { _ = os.Remove(scriptFileName) }()
+
+	// when:
+	_, err := RunAndCollectOutput(context.Background(), Params{
+		Command: "/usr/bin/env",
+		Args:    []string{"python3", scriptFileName},
+	})
+
+	// then:
+	require.ErrorContains(t, err, "test message written to stderr")
+}
+
 func writeIntoTmp(t *testing.T, content []byte) (fileName string) {
 	tmpFile, err := os.CreateTemp("", "")
 	defer iox.Close(tmpFile)
