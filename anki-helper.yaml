@@ -1,4 +1,0 @@
-runConfigs:
-  - "config/spanish.yaml"
-  - "config/english.yaml"
-  - "config/german.yaml"
