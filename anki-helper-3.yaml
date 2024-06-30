@@ -1,0 +1,169 @@
+# ============== Sample configuration for the presentation purposes =============
+# ============== This configuration assumes SampleDeck.apkg is imported =======
+azure:
+  # Relative path to a file that contains Azure API key.
+  apiKeyFile: config/azure-key.txt
+  endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
+  voice: de-DE-KillianNeural
+  minPauseBetweenRequests: 2100ms
+  retryOnTooManyRequests: true
+#  logRequests: true
+anki:
+  # NOTE: this is non-default port. If you didn't change it manually in yor plugin configuration,
+  #       remove the following line so that anki-helper uses default AnkiConnect address.
+  connectUrl: 'http://localhost:8766'
+  # logRequests: true
+actions:
+  tts:
+    - forGeneratedNoteType: GermanVerb
+    - textField: Word
+      audioField: WordVoiceover
+      noteFilter: "note:German* Word:_* WordVoiceover:"
+    - textField: WordExample
+      audioField: WordExampleVoiceover
+      noteFilter: "note:German* WordExample:_* WordExampleVoiceover:"
+  noteProcessing:
+    # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
+    - noteFilter: note:German* Image:_* -tag:image_resized
+      exec:
+        command: ./config/scripts/resize_image.py
+        args:
+          - Image
+          - $$.Note.Fields.Image$$
+          - "200"
+          - image_resized
+    # Fill in verb conjugation
+    - noteFilter: |
+        note:GermanVerb -tag:skip_conjugation (
+             (IndicativPraesensEr: -tag:conjugation_done:IndicativPraesensEr)
+          OR (PerfektIch: -tag:conjugation_done:PerfektIch)
+        )
+      exec:
+        command: /usr/bin/env
+        args:
+          - go
+          - run
+          - $$ resolve_path "./config/scripts/german_word_forms.go" $$
+          - verb
+          - $$.Note.Fields.Infinitiv$$
+          - $$ .Note.Tags | to_json $$
+      minPauseBetweenExecutions: 1200ms
+      timeout: 5s
+  noteTypes:
+    - name: GermanVerb
+      fields:
+        - name: Infinitiv
+          vars:
+            pronoun: ""
+            tense: Verb im Infinitiv
+        - name: InfinitivExample
+
+        - name: Explanation
+          skipVoiceover: true
+
+        - name: PerfektIch
+          vars:
+            pronoun: "(im Perfekt) ich"
+            tense: "Verb im Perfekt"
+        - name: PerfektIchExample
+
+        - name: IndicativPraesensEr
+          vars:
+            pronoun: "er/sie/es"
+            tense: Verb im Präsens
+        - name: IndicativPraesensErExample
+      templates:
+        - name: "$$.Field$$"
+          forFields:
+            - Infinitiv
+            - PerfektIch
+            - IndicativPraesensEr
+          front: |
+            <h2>$$.Vars.tense$$</h2>
+            
+            <div><i>{{text:Explanation}}</i></div><br>
+            
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>[&#8230;]</span></b></div>
+            
+            {{#$$.Field$$Example}}
+              <br>
+              <div>
+                Beispiel:<br><span class="mycloze">{{$$.Field$$Example}}</span>
+              </div>
+            {{/$$.Field$$Example}}
+            
+            {{type:$$.Field$$}}
+            
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) + "<b><span class='cloze'>[&#8230;]</span></b>" + html.substring(endIdx + 2);
+                }
+            
+                elem.innerHTML = html;
+            });
+            </script>
+          back: |
+            <h2>$$.Vars.tense$$</h2>
+            
+            <div><i>{{text:Explanation}}</i></div><br>
+            
+            <div>$$.Vars.pronoun$$ <b><span class='cloze'>{{text:$$.Field$$}}</span></b>{{$$.FieldVoiceover$$}}</div>
+            
+            {{#$$.Field$$Example}}
+              <br>
+              <div>
+                Beispiel:<br><span class="mycloze">{{$$.Field$$Example}}</span> {{$$.Field$$ExampleVoiceover}}
+              </div>
+            {{/$$.Field$$Example}}
+            
+            <hr id=answer>
+            {{type:$$.Field$$}}
+            
+            <script>
+            var clozes = document.querySelectorAll(".mycloze");
+            clozes.forEach(function (elem) {
+                var html = elem.innerHTML;
+                while (true) {
+                    var beginIdx = html.indexOf("{" + "{");
+                    if (beginIdx < 0) {
+                        break;
+                    }
+
+                    var endIdx = html.indexOf("}" + "}", beginIdx);
+                    if (endIdx < 0) {
+                        break;
+                    }
+                    html = html.substring(0, beginIdx) +
+                        "<b><span class='cloze'>" +
+                        html.substring(beginIdx+2, endIdx) +
+                        "</span></b>" +
+                        html.substring(endIdx + 2);
+                }
+
+                elem.innerHTML = html;
+            });
+            </script>
+      css: |
+        .card {
+          font-family: arial;
+          font-size: 20px;
+          text-align: center;
+          color: black;
+          background-color: white;
+        }
+
+        .cloze {
+         font-weight: bold;
+         color: blue;
+        }
