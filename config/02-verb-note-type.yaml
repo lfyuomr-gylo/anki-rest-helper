@@ -2,7 +2,7 @@
 # ============== This configuration assumes SampleDeck.apkg is imported =======
 azure:
   # Relative path to a file that contains Azure API key.
-  apiKeyFile: config/azure-key.txt
+  apiKeyFile: ./azure-key.txt
   endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
   voice: de-DE-KillianNeural
   minPauseBetweenRequests: 2100ms
@@ -16,39 +16,6 @@ anki:
 actions:
   tts:
     - forGeneratedNoteType: GermanVerb
-    - textField: Word
-      audioField: WordVoiceover
-      noteFilter: "note:German* Word:_* WordVoiceover:"
-    - textField: WordExample
-      audioField: WordExampleVoiceover
-      noteFilter: "note:German* WordExample:_* WordExampleVoiceover:"
-  noteProcessing:
-    # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
-    - noteFilter: note:German* Image:_* -tag:image_resized
-      exec:
-        command: ./config/scripts/resize_image.py
-        args:
-          - Image
-          - $$.Note.Fields.Image$$
-          - "200"
-          - image_resized
-    # Fill in verb conjugation
-    - noteFilter: |
-        note:GermanVerb -tag:skip_conjugation (
-             (IndicativPraesensEr: -tag:conjugation_done:IndicativPraesensEr)
-          OR (PerfektIch: -tag:conjugation_done:PerfektIch)
-        )
-      exec:
-        command: /usr/bin/env
-        args:
-          - go
-          - run
-          - $$ resolve_path "./config/scripts/german_word_forms.go" $$
-          - verb
-          - $$.Note.Fields.Infinitiv$$
-          - $$ .Note.Tags | to_json $$
-      minPauseBetweenExecutions: 1200ms
-      timeout: 5s
   noteTypes:
     - name: GermanVerb
       fields:

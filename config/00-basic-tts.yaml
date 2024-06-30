@@ -2,7 +2,7 @@
 # ============== This configuration assumes SampleDeck.apkg is imported =======
 azure:
   # Relative path to a file that contains Azure API key.
-  apiKeyFile: config/azure-key.txt
+  apiKeyFile: ./azure-key.txt
   endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
   voice: de-DE-KillianNeural
   minPauseBetweenRequests: 2100ms
@@ -21,13 +21,3 @@ actions:
     - textField: WordExample
       audioField: WordExampleVoiceover
       noteFilter: "note:German* WordExample:_* WordExampleVoiceover:"
-  noteProcessing:
-    # Resize all images stored in tag 'Image' to height 200, preserving the aspect ratio.
-    - noteFilter: note:German* Image:_* -tag:image_resized
-      exec:
-        command: ./config/scripts/resize_image.py
-        args:
-          - Image
-          - $$.Note.Fields.Image$$
-          - "200"
-          - image_resized

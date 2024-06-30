@@ -1,0 +1,34 @@
+# ============== Sample configuration for the presentation purposes =============
+# ============== This configuration assumes SampleDeck.apkg is imported =======
+azure:
+  # Relative path to a file that contains Azure API key.
+  apiKeyFile: ./azure-key.txt
+  endpointUrl: https://germanywestcentral.tts.speech.microsoft.com/cognitiveservices/v1
+  voice: de-DE-KillianNeural
+  minPauseBetweenRequests: 2100ms
+  retryOnTooManyRequests: true
+#  logRequests: true
+anki:
+  # NOTE: this is non-default port. If you didn't change it manually in yor plugin configuration,
+  #       remove the following line so that anki-helper uses default AnkiConnect address.
+  connectUrl: 'http://localhost:8766'
+  # logRequests: true
+actions:
+  noteProcessing:
+    # Fill in verb conjugation
+    - noteFilter: |
+        note:GermanVerb -tag:skip_conjugation (
+             (IndicativPraesensEr: -tag:conjugation_done:IndicativPraesensEr)
+          OR (PerfektIch: -tag:conjugation_done:PerfektIch)
+        )
+      exec:
+        command: /usr/bin/env
+        args:
+          - go
+          - run
+          - $$ resolve_path "./scripts/german_word_forms.go" $$
+          - verb
+          - $$.Note.Fields.Infinitiv$$
+          - $$ .Note.Tags | to_json $$
+      minPauseBetweenExecutions: 1200ms
+      timeout: 5s

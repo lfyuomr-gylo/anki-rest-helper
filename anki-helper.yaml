@@ -1,0 +1,7 @@
+runConfigs:
+  - "config/00-basic-tts.yaml"
+#  - "config/01-resize-images.yaml"
+#  - "config/02-verb-note-type.yaml"
+#    # NOTE: when uncommenting line below, put it before 02-verb-note-type
+#    # in order to generate voiceover for the conjugation in the same run.
+#  - "config/03-conjugate-verbs.yaml"
