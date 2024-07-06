@@ -544,25 +544,6 @@ actions:
           - $$.Note.Fields.Image$$
           - "200"
           - image_resized
-    # Generate usage examples for verb infinitive using Gemini.
-    - noteFilter: "note:GermanVerb InfinitivExample: -tag:exampleGenerated:InfinitiveExample"
-      timeout: 5s
-      exec:
-        command: /usr/bin/env
-        args:
-          - go
-          - run
-          - $$ resolve_path "./scripts/generate_field_gemini.go" $$
-          - --api-key-file=$$ resolve_path "./gemini-key.txt" $$
-          - --model=gemini-1.5-pro
-          - --field=InfinitivExample
-          - --prompt
-          - >-
-            Please come up with an example sentence in German to show the usage 
-            of the verb "$$.Note.Fields.Infinitiv$$" in infinitive in the sense "$$.Note.Fields.Explanation$$".
-            Please enclose the verb in {{double curly braces}}.
-            Do not provide a translation for the sentence.
-          - --add-tag=exampleGenerated:InfinitiveExample
   cardsOrganization:
     - filter: -note:GermanVerb* -card:SingularAkkusativ -card:SingularDativ -card:SingularGenitiv note:German*
       targetDeck: German::00_Other
